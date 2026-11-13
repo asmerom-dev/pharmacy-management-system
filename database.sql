@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS drugs (
     category VARCHAR(100) NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     stock INTEGER NOT NULL DEFAULT 0,
+    expiry_date DATE DEFAULT (CURRENT_DATE + INTERVAL '1 year'),
     created_at TIMESTAMP DEFAULT NOW()
 );
 

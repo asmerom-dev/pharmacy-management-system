@@ -1,164 +1,385 @@
 import { useState, useEffect } from "react";
+import {
+  ShoppingCart,
+  Search,
+  Plus,
+  Minus,
+  Trash2,
+  Printer,
+  CheckCircle2,
+  Pill,
+  User,
+  AlertCircle
+} from "lucide-react";
 
 function SellDrug() {
   const [drugs, setDrugs] = useState([]);
-  const [selectedDrug, setSelectedDrug] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [message, setMessage] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [cart, setCart] = useState([]);
+  const [customerName, setCustomerName] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  // Fetch all drugs for the dropdown when component loads
+  const fetchDrugs = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/drugs");
+      if (res.ok) {
+        const data = await res.json();
+        setDrugs(data);
+      }
+    } catch (err) {
+      console.error("Error fetching drugs:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchDrugs();
   }, []);
 
-  const fetchDrugs = async () => {
-    try {
-      const response = await fetch("/api/drugs");
-      const data = await response.json();
-      // Only show drugs that have stock available
-      setDrugs(data.filter((drug) => drug.stock > 0));
-    } catch (error) {
-      console.log("Error fetching drugs:", error);
+  const addToCart = (drug) => {
+    setSuccessMessage("");
+    setErrorMessage("");
+
+    if (drug.stock <= 0) {
+      setErrorMessage(`${drug.name} is out of stock!`);
+      return;
     }
+
+    setCart((prevCart) => {
+      const existing = prevCart.find((item) => item.id === drug.id);
+      if (existing) {
+        if (existing.quantity >= drug.stock) {
+          setErrorMessage(`Cannot exceed available stock (${drug.stock}) for ${drug.name}`);
+          return prevCart;
+        }
+        return prevCart.map((item) =>
+          item.id === drug.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      } else {
+        return [
+          ...prevCart,
+          {
+            id: drug.id,
+            name: drug.name,
+            price: parseFloat(drug.price),
+            stock: drug.stock,
+            quantity: 1,
+          },
+        ];
+      }
+    });
   };
 
-  // Handle the sale submission
-  const handleSell = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const updateQuantity = (id, delta) => {
+    setCart((prevCart) =>
+      prevCart
+        .map((item) => {
+          if (item.id === id) {
+            const newQty = item.quantity + delta;
+            if (newQty <= 0) return null;
+            if (newQty > item.stock) {
+              setErrorMessage(`Only ${item.stock} in stock for ${item.name}`);
+              return item;
+            }
+            return { ...item, quantity: newQty };
+          }
+          return item;
+        })
+        .filter(Boolean)
+    );
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    setErrorMessage("");
+    setSuccessMessage("");
+  };
+
+  // Calculations
+  const subtotal = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const tax = subtotal * 0.15; // 15% VAT
+  const total = subtotal + tax;
+
+  const handleCheckoutAndPrint = async () => {
+    if (cart.length === 0) {
+      setErrorMessage("Please add at least one medication to the bill.");
+      return;
+    }
 
     try {
-      const response = await fetch("/api/sales", {
+      setIsProcessing(true);
+      setErrorMessage("");
+
+      const payload = {
+        customer_name: customerName || "Walk-in Customer",
+        items: cart.map((item) => ({
+          drug_id: item.id,
+          quantity: item.quantity,
+        })),
+      };
+
+      const res = await fetch("/api/sales", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          drug_id: parseInt(selectedDrug),
-          quantity: parseInt(quantity),
-        }),
+        body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage({
-          type: "success",
-          text: `${data.message} | Remaining stock: ${data.remainingStock}`,
-        });
-        // Reset form
-        setSelectedDrug("");
-        setQuantity("");
-        // Refresh drugs list to update stock numbers
-        fetchDrugs();
-      } else {
-        setMessage({ type: "error", text: data.error });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to process sale");
       }
-    } catch (error) {
-      setMessage({ type: "error", text: "Failed to record sale" });
-    }
 
-    setLoading(false);
-    // Clear message after 4 seconds
-    setTimeout(() => setMessage(null), 4000);
+      setSuccessMessage(
+        `Sale completed successfully for ETB ${total.toFixed(2)}!`
+      );
+      
+      // Print receipt
+      setTimeout(() => {
+        window.print();
+      }, 300);
+
+      clearCart();
+      setCustomerName("");
+      fetchDrugs(); // Refresh stock
+    } catch (err) {
+      setErrorMessage(err.message);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  // Find the selected drug to show its info
-  const selectedDrugInfo = drugs.find(
-    (drug) => drug.id === parseInt(selectedDrug)
+  const filteredDrugs = drugs.filter((d) =>
+    d.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <div>
-      {/* Page Header */}
-      <div className="page-header">
-        <h1>🛒 Sell Drug</h1>
-        <p>
-          Record a sale — the stock will automatically decrease when you submit.
-        </p>
+    <div className="pos-view-page">
+      {/* Header Bar */}
+      <div className="pos-top-header">
+        <div className="pos-heading-wrapper">
+          <div className="pos-icon-badge">
+            <ShoppingCart size={22} className="text-white" />
+          </div>
+          <div>
+            <h2 className="main-page-title">Sell Medicine (POS)</h2>
+            <p className="main-page-subtitle">Fast & Easy Billing</p>
+          </div>
+        </div>
+
+        <button
+          className="btn-print-pos-tool"
+          onClick={() => window.print()}
+          title="Print POS View"
+        >
+          <Printer size={18} />
+        </button>
       </div>
 
-      {/* Alert Messages */}
-      {message && (
-        <div className={`alert alert-${message.type}`}>
-          {message.type === "success" ? "✅" : "❌"} {message.text}
+      {/* Notifications */}
+      {successMessage && (
+        <div className="pos-alert alert-success">
+          <CheckCircle2 size={18} />
+          <span>{successMessage}</span>
+        </div>
+      )}
+      {errorMessage && (
+        <div className="pos-alert alert-danger">
+          <AlertCircle size={18} />
+          <span>{errorMessage}</span>
         </div>
       )}
 
-      {/* Sale Form */}
-      <div className="card">
-        <form onSubmit={handleSell} className="form-container">
-          <div className="form-group">
-            <label>Select Drug</label>
-            <select
-              value={selectedDrug}
-              onChange={(e) => setSelectedDrug(e.target.value)}
-              required
-            >
-              <option value="">-- Choose a drug --</option>
-              {drugs.map((drug) => (
-                <option key={drug.id} value={drug.id}>
-                  {drug.name} (Stock: {drug.stock}) - ${parseFloat(drug.price).toFixed(2)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Show selected drug info */}
-          {selectedDrugInfo && (
-            <div
-              style={{
-                background: "#f8fdf8",
-                padding: "12px 16px",
-                borderRadius: "8px",
-                marginBottom: "18px",
-                fontSize: "14px",
-              }}
-            >
-              <strong>Selected:</strong> {selectedDrugInfo.name} |{" "}
-              <strong>Price:</strong> ${parseFloat(selectedDrugInfo.price).toFixed(2)} |{" "}
-              <strong>Available Stock:</strong> {selectedDrugInfo.stock}
-            </div>
-          )}
-
-          <div className="form-group">
-            <label>Quantity to Sell</label>
+      {/* Main 2-Column POS Workspace */}
+      <div className="pos-split-grid">
+        {/* Left Side: Drug Selection Catalog */}
+        <div className="pos-catalog-panel">
+          <div className="pos-search-box">
+            <Search size={18} className="pos-search-icon" />
             <input
-              type="number"
-              min="1"
-              max={selectedDrugInfo ? selectedDrugInfo.stock : 999}
-              placeholder="Enter quantity"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              required
+              type="text"
+              placeholder="Search medicine..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          {/* Show total price preview */}
-          {selectedDrugInfo && quantity > 0 && (
-            <div
-              style={{
-                background: "#e8f5e9",
-                padding: "14px 18px",
-                borderRadius: "8px",
-                marginBottom: "18px",
-                fontSize: "16px",
-                fontWeight: "600",
-                color: "#1b5e20",
-              }}
-            >
-              💰 Total Price: $
-              {(parseFloat(selectedDrugInfo.price) * parseInt(quantity)).toFixed(2)}
-            </div>
-          )}
+          <div className="pos-medicines-list">
+            {loading ? (
+              <div className="pos-loading-state">Loading medicines...</div>
+            ) : filteredDrugs.length === 0 ? (
+              <div className="pos-loading-state">No medicines found.</div>
+            ) : (
+              filteredDrugs.map((drug) => (
+                <div key={drug.id} className="pos-drug-card-item">
+                  <div className="pos-card-left-info">
+                    <div className="pos-pill-capsule-icon">
+                      <svg viewBox="0 0 32 32" className="pos-pill-svg" fill="none">
+                        <g transform="rotate(-45 16 16)">
+                          <rect x="8" y="10" width="8" height="12" rx="4" fill="#3B82F6" />
+                          <rect x="16" y="10" width="8" height="12" rx="4" fill="#10B981" />
+                        </g>
+                      </svg>
+                    </div>
+                    <div className="pos-drug-title-group">
+                      <h4 className="pos-drug-name">{drug.name}</h4>
+                      <span
+                        className={`pos-stock-tag ${
+                          drug.stock === 0
+                            ? "stock-tag-out"
+                            : drug.stock <= 20
+                            ? "stock-tag-low"
+                            : "stock-tag-in"
+                        }`}
+                      >
+                        {drug.stock === 0
+                          ? "Out of Stock"
+                          : `In Stock: ${drug.stock}`}
+                      </span>
+                    </div>
+                  </div>
 
+                  <div className="pos-card-right-action">
+                    <span className="pos-price-label">
+                      ETB {parseFloat(drug.price).toFixed(2)}
+                    </span>
+                    <button
+                      className="btn-add-pos-plus"
+                      onClick={() => addToCart(drug)}
+                      disabled={drug.stock <= 0}
+                      title={
+                        drug.stock <= 0 ? "Out of Stock" : "Add to current bill"
+                      }
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Right Side: Current Bill Panel */}
+        <div className="pos-bill-panel">
+          <div className="pos-bill-header">
+            <h3>Current Bill</h3>
+            {cart.length > 0 && (
+              <button className="btn-clear-bill" onClick={clearCart}>
+                <Trash2 size={14} />
+                <span>Clear</span>
+              </button>
+            )}
+          </div>
+
+          {/* Cart Table */}
+          <div className="pos-cart-table-wrapper">
+            {cart.length === 0 ? (
+              <div className="pos-cart-empty">
+                <ShoppingCart size={36} className="empty-cart-icon" />
+                <p>Your bill is empty</p>
+                <span>Click (+) on any medication to add it</span>
+              </div>
+            ) : (
+              <table className="pos-cart-table">
+                <thead>
+                  <tr>
+                    <th>Medicine</th>
+                    <th style={{ textAlign: "center" }}>Qty</th>
+                    <th>Price</th>
+                    <th style={{ textAlign: "right" }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cart.map((item) => (
+                    <tr key={item.id}>
+                      <td className="cart-item-name">
+                        <Pill size={14} className="cart-pill-icon" />
+                        <span>{item.name}</span>
+                      </td>
+                      <td className="cart-item-qty">
+                        <div className="qty-counter-control">
+                          <button
+                            className="btn-qty-step"
+                            onClick={() => updateQuantity(item.id, -1)}
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <span className="qty-number-label">
+                            {item.quantity}
+                          </span>
+                          <button
+                            className="btn-qty-step"
+                            onClick={() => updateQuantity(item.id, 1)}
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="cart-price-cell">
+                        ETB {item.price.toFixed(2)}
+                      </td>
+                      <td className="cart-total-cell">
+                        ETB {(item.price * item.quantity).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Customer Name */}
+          <div className="pos-customer-input-box">
+            <label>Customer Name (Optional)</label>
+            <div className="pos-customer-input-wrapper">
+              <User size={16} className="input-user-icon" />
+              <input
+                type="text"
+                placeholder="Enter customer name..."
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Totals & Calculations */}
+          <div className="pos-financial-breakdown">
+            <div className="breakdown-line">
+              <span>Subtotal:</span>
+              <span className="font-semibold">ETB {subtotal.toFixed(2)}</span>
+            </div>
+            <div className="breakdown-line">
+              <span>Tax (15%):</span>
+              <span className="font-semibold">ETB {tax.toFixed(2)}</span>
+            </div>
+            <div className="pos-gold-total-banner">
+              <span className="gold-banner-label">Total:</span>
+              <span className="gold-banner-amount">
+                ETB {total.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          {/* Checkout & Print Button */}
           <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={loading || !selectedDrug || !quantity}
+            className="btn-checkout-print"
+            disabled={cart.length === 0 || isProcessing}
+            onClick={handleCheckoutAndPrint}
           >
-            {loading ? "Processing..." : "💳 Record Sale"}
+            <ShoppingCart size={18} />
+            <span>
+              {isProcessing ? "Processing Sale..." : "Checkout & Print"}
+            </span>
           </button>
-        </form>
+        </div>
       </div>
     </div>
   );

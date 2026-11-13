@@ -1,282 +1,295 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import {
+  Pill,
+  Plus,
+  Search,
+  Edit2,
+  Trash2,
+  AlertCircle,
+  CheckCircle,
+  Filter,
+  XCircle,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react";
+import AddDrugModal from "./AddDrugModal";
 
 function AllDrugs() {
+  const [searchParams] = useSearchParams();
   const [drugs, setDrugs] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [showDrugs, setShowDrugs] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [message, setMessage] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedStatus, setSelectedStatus] = useState("All");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingDrug, setEditingDrug] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
-  // New drug form state
-  const [newDrug, setNewDrug] = useState({
-    name: "",
-    category: "",
-    price: "",
-    stock: "",
+  const fetchDrugs = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/drugs");
+      if (res.ok) {
+        const data = await res.json();
+        setDrugs(data);
+      }
+    } catch (err) {
+      console.error("Error fetching drugs:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDrugs();
+  }, []);
+
+  useEffect(() => {
+    const q = searchParams.get("search");
+    if (q) setSearchTerm(q);
+  }, [searchParams]);
+
+  const handleDelete = async (id, name) => {
+    if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
+      try {
+        const res = await fetch(`/api/drugs/${id}`, { method: "DELETE" });
+        if (res.ok) {
+          setDrugs(drugs.filter((d) => d.id !== id));
+        } else {
+          alert("Failed to delete medication.");
+        }
+      } catch (err) {
+        console.error("Error deleting drug:", err);
+      }
+    }
+  };
+
+  // Categories list
+  const categories = ["All", ...new Set(drugs.map((d) => d.category).filter(Boolean))];
+
+  // Filtering
+  const filteredDrugs = drugs.filter((drug) => {
+    const matchesSearch =
+      drug.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      drug.category.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "All" || drug.category === selectedCategory;
+
+    let status = "In Stock";
+    if (drug.stock === 0) status = "Out of Stock";
+    else if (drug.stock <= 20) status = "Low Stock";
+
+    const matchesStatus =
+      selectedStatus === "All" ||
+      (selectedStatus === "In Stock" && drug.stock > 20) ||
+      (selectedStatus === "Low Stock" && drug.stock > 0 && drug.stock <= 20) ||
+      (selectedStatus === "Out of Stock" && drug.stock === 0);
+
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  // Fetch all drugs from the backend
-  const fetchDrugs = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/drugs");
-      const data = await response.json();
-      setDrugs(data);
-      setShowDrugs(true);
-    } catch (error) {
-      console.log("Error fetching drugs:", error);
-      setMessage({ type: "error", text: "Failed to load drugs" });
-    }
-    setLoading(false);
-  };
+  // Pagination
+  const totalEntries = filteredDrugs.length;
+  const totalPages = Math.ceil(totalEntries / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedDrugs = filteredDrugs.slice(startIndex, startIndex + itemsPerPage);
 
-  // Handle adding a new drug
-  const handleAddDrug = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("/api/drugs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newDrug.name,
-          category: newDrug.category,
-          price: parseFloat(newDrug.price),
-          stock: parseInt(newDrug.stock),
-        }),
-      });
-
-      if (response.ok) {
-        const addedDrug = await response.json();
-        setDrugs([...drugs, addedDrug]);
-        setNewDrug({ name: "", category: "", price: "", stock: "" });
-        setShowAddForm(false);
-        setMessage({ type: "success", text: `${addedDrug.name} added successfully!` });
-      } else {
-        const errorData = await response.json();
-        setMessage({ type: "error", text: errorData.error });
-      }
-    } catch (error) {
-      setMessage({ type: "error", text: "Failed to add drug" });
-    }
-
-    // Clear message after 3 seconds
-    setTimeout(() => setMessage(null), 3000);
-  };
-
-  // Delete a drug
-  const handleDeleteDrug = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete ${name}?`)) return;
-
-    try {
-      const response = await fetch(`/api/drugs/${id}`, { method: "DELETE" });
-      if (response.ok) {
-        setDrugs(drugs.filter((drug) => drug.id !== id));
-        setMessage({ type: "success", text: `${name} deleted successfully!` });
-      }
-    } catch (error) {
-      setMessage({ type: "error", text: "Failed to delete drug" });
-    }
-    setTimeout(() => setMessage(null), 3000);
-  };
-
-  // Get stock status badge
-  const getStockBadge = (stock) => {
+  const getStatusBadge = (stock) => {
     if (stock === 0) {
-      return <span className="badge badge-danger">Out of Stock</span>;
-    } else if (stock <= 50) {
-      return <span className="badge badge-warning">Low Stock ({stock})</span>;
-    } else {
-      return <span className="badge badge-success">In Stock ({stock})</span>;
+      return <span className="status-badge status-out">● Out of Stock</span>;
     }
+    if (stock <= 20) {
+      return <span className="status-badge status-low">● Low Stock</span>;
+    }
+    return <span className="status-badge status-in">● In Stock</span>;
   };
-
-  // Filter drugs by search term
-  const filteredDrugs = drugs.filter(
-    (drug) =>
-      drug.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      drug.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
-    <div>
-      {/* Page Header */}
-      <div className="page-header">
-        <h1>💊 All Drugs</h1>
-        <p>View and manage all medications in your pharmacy inventory.</p>
-      </div>
-
-      {/* Alert Messages */}
-      {message && (
-        <div className={`alert alert-${message.type}`}>
-          {message.type === "success" ? "✅" : "❌"} {message.text}
-        </div>
-      )}
-
-      {/* Toolbar */}
-      <div className="toolbar">
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button className="btn btn-primary" onClick={fetchDrugs}>
-            📋 Show All Drugs
-          </button>
-          {showDrugs && (
-            <button
-              className="btn btn-secondary"
-              onClick={() => setShowAddForm(!showAddForm)}
-            >
-              {showAddForm ? "✖ Cancel" : "➕ Add New Drug"}
-            </button>
-          )}
-        </div>
-
-        {showDrugs && (
-          <input
-            type="text"
-            className="search-input"
-            placeholder="🔍 Search drugs by name or category..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        )}
-      </div>
-
-      {/* Add Drug Form (shows when toggled) */}
-      {showAddForm && (
-        <div className="add-drug-section">
-          <h3>➕ Add New Drug to Inventory</h3>
-          <form onSubmit={handleAddDrug} className="add-drug-form">
-            <div className="form-group">
-              <label>Drug Name</label>
-              <input
-                type="text"
-                placeholder="e.g. Amoxicillin 500mg"
-                value={newDrug.name}
-                onChange={(e) =>
-                  setNewDrug({ ...newDrug, name: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Category</label>
-              <select
-                value={newDrug.category}
-                onChange={(e) =>
-                  setNewDrug({ ...newDrug, category: e.target.value })
-                }
-                required
-              >
-                <option value="">Select category</option>
-                <option value="Antibiotic">Antibiotic</option>
-                <option value="Pain Relief">Pain Relief</option>
-                <option value="Gastric">Gastric</option>
-                <option value="Diabetes">Diabetes</option>
-                <option value="Blood Pressure">Blood Pressure</option>
-                <option value="Allergy">Allergy</option>
-                <option value="Cholesterol">Cholesterol</option>
-                <option value="Respiratory">Respiratory</option>
-                <option value="Blood Thinner">Blood Thinner</option>
-                <option value="Vitamin">Vitamin</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Price ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="e.g. 12.50"
-                value={newDrug.price}
-                onChange={(e) =>
-                  setNewDrug({ ...newDrug, price: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Stock Quantity</label>
-              <input
-                type="number"
-                min="0"
-                placeholder="e.g. 100"
-                value={newDrug.stock}
-                onChange={(e) =>
-                  setNewDrug({ ...newDrug, stock: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="form-group">
-              <button type="submit" className="btn btn-primary">
-                ✅ Add Drug
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Loading State */}
-      {loading && <div className="loading">Loading drugs...</div>}
-
-      {/* Drugs Table */}
-      {showDrugs && !loading && (
-        <div className="card">
-          <p style={{ color: "#888", marginBottom: "10px", fontSize: "14px" }}>
-            Showing {filteredDrugs.length} of {drugs.length} drugs
-          </p>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Drug Name</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Stock Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDrugs.length > 0 ? (
-                filteredDrugs.map((drug, index) => (
-                  <tr key={drug.id}>
-                    <td>{index + 1}</td>
-                    <td style={{ fontWeight: 500 }}>{drug.name}</td>
-                    <td>{drug.category}</td>
-                    <td>${parseFloat(drug.price).toFixed(2)}</td>
-                    <td>{getStockBadge(drug.stock)}</td>
-                    <td>
-                      <button
-                        className="btn btn-danger"
-                        style={{ padding: "5px 12px", fontSize: "12px" }}
-                        onClick={() => handleDeleteDrug(drug.id, drug.name)}
-                      >
-                        🗑 Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: "center", padding: "30px", color: "#aaa" }}>
-                    No drugs found matching your search.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Initial State - before clicking Show All Drugs */}
-      {!showDrugs && !loading && (
-        <div className="card">
-          <div className="empty-state">
-            <div className="empty-icon">💊</div>
-            <p>Click "Show All Drugs" to view your inventory</p>
+    <div className="inventory-view-page">
+      {/* Header Bar */}
+      <div className="inventory-top-header">
+        <div className="inventory-heading-wrapper">
+          <div className="inventory-icon-badge">
+            <Pill size={22} className="text-white" />
+          </div>
+          <div>
+            <h2 className="main-page-title">Inventory / All Drugs</h2>
+            <p className="main-page-subtitle">Manage your medicine stock</p>
           </div>
         </div>
-      )}
+
+        <button
+          className="btn-add-drug-green"
+          onClick={() => {
+            setEditingDrug(null);
+            setIsModalOpen(true);
+          }}
+        >
+          <Plus size={18} />
+          <span>Add New Drug</span>
+        </button>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="inventory-filter-bar">
+        <div className="search-filter-input-wrap">
+          <Search size={18} className="filter-search-icon" />
+          <input
+            type="text"
+            placeholder="Search by name..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+
+        <div className="dropdowns-filter-wrap">
+          <select
+            value={selectedCategory}
+            onChange={(e) => {
+              setSelectedCategory(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="filter-select-custom"
+          >
+            <option value="All">All Categories</option>
+            {categories
+              .filter((c) => c !== "All")
+              .map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+          </select>
+
+          <select
+            value={selectedStatus}
+            onChange={(e) => {
+              setSelectedStatus(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="filter-select-custom"
+          >
+            <option value="All">All Status</option>
+            <option value="In Stock">In Stock</option>
+            <option value="Low Stock">Low Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Drugs Table */}
+      <div className="inventory-table-card">
+        <table className="inventory-table">
+          <thead>
+            <tr>
+              <th style={{ width: "45px" }}>#</th>
+              <th>Drug Name</th>
+              <th>Category</th>
+              <th>Stock</th>
+              <th>Unit Price</th>
+              <th>Expiry Date</th>
+              <th>Status</th>
+              <th style={{ textAlign: "center", width: "110px" }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="8" className="table-empty-notice">
+                  Loading medications...
+                </td>
+              </tr>
+            ) : paginatedDrugs.length === 0 ? (
+              <tr>
+                <td colSpan="8" className="table-empty-notice">
+                  No medications found matching your criteria.
+                </td>
+              </tr>
+            ) : (
+              paginatedDrugs.map((drug, index) => (
+                <tr key={drug.id} className="table-row-hover">
+                  <td className="row-index">{startIndex + index + 1}</td>
+                  <td className="font-semibold text-slate-800">{drug.name}</td>
+                  <td className="text-slate-600">{drug.category}</td>
+                  <td className="font-semibold">{drug.stock}</td>
+                  <td className="font-semibold text-emerald-800">
+                    ETB {parseFloat(drug.price).toFixed(2)}
+                  </td>
+                  <td className="text-slate-600">
+                    {drug.expiry_date || "2027-06-30"}
+                  </td>
+                  <td>{getStatusBadge(drug.stock)}</td>
+                  <td>
+                    <div className="action-buttons-cell">
+                      <button
+                        className="btn-action-edit"
+                        title="Edit"
+                        onClick={() => {
+                          setEditingDrug(drug);
+                          setIsModalOpen(true);
+                        }}
+                      >
+                        <Edit2 size={15} />
+                      </button>
+                      <button
+                        className="btn-action-delete"
+                        title="Delete"
+                        onClick={() => handleDelete(drug.id, drug.name)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+
+        {/* Table Footer / Pagination */}
+        <div className="table-pagination-footer">
+          <span className="pagination-info-text">
+            Showing {totalEntries === 0 ? 0 : startIndex + 1} to{" "}
+            {Math.min(startIndex + itemsPerPage, totalEntries)} of {totalEntries}{" "}
+            entries
+          </span>
+
+          <div className="pagination-controls">
+            <button
+              className="page-nav-arrow"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="page-number-active">{currentPage}</span>
+            <button
+              className="page-nav-arrow"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Add / Edit Drug Modal */}
+      <AddDrugModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingDrug(null);
+        }}
+        onDrugAdded={() => {
+          fetchDrugs();
+        }}
+      />
     </div>
   );
 }
