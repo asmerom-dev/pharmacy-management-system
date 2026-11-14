@@ -9,18 +9,13 @@ import {
   CheckCircle2,
   Pill,
   User,
-  AlertCircle,
-  Sparkles,
-  ArrowDownAZ
+  AlertCircle
 } from "lucide-react";
-
-const ALPHABETS = ["ALL", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")];
 
 function SellDrug() {
   const [drugs, setDrugs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedLetter, setSelectedLetter] = useState("ALL");
   const [cart, setCart] = useState([]);
   const [customerName, setCustomerName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -183,17 +178,8 @@ function SellDrug() {
 
     return drugs
       .filter((drug) => {
-        // Alphabet ribbon filter
-        if (selectedLetter !== "ALL") {
-          if (!drug.name.toUpperCase().startsWith(selectedLetter)) {
-            return false;
-          }
-        }
-        // Search term filter
-        if (q) {
-          return drug.name.toLowerCase().includes(q) || drug.category.toLowerCase().includes(q);
-        }
-        return true;
+        if (!q) return true;
+        return drug.name.toLowerCase().includes(q) || drug.category.toLowerCase().includes(q);
       })
       .sort((a, b) => {
         if (q) {
@@ -203,10 +189,10 @@ function SellDrug() {
           if (aStarts && !bStarts) return -1;
           if (!aStarts && bStarts) return 1;
         }
-        // Default alphabetical sort
+        // Default alphabetical sort (A to Z)
         return a.name.localeCompare(b.name);
       });
-  }, [drugs, searchTerm, selectedLetter]);
+  }, [drugs, searchTerm]);
 
   return (
     <div className="pos-view-page">
@@ -218,7 +204,7 @@ function SellDrug() {
           </div>
           <div>
             <h2 className="main-page-title">Sell Medicine (POS)</h2>
-            <p className="main-page-subtitle">Fast & Easy Billing with Alphabetical Search</p>
+            <p className="main-page-subtitle">Fast & Easy Billing with Smart Alphabetical Search</p>
           </div>
         </div>
 
@@ -245,7 +231,7 @@ function SellDrug() {
         </div>
       )}
 
-      {/* Main 2-Column POS Workspace */}
+      {/* Main 2-Column Responsive POS Workspace */}
       <div className="pos-split-grid">
         {/* Left Side: Drug Selection Catalog */}
         <div className="pos-catalog-panel">
@@ -263,30 +249,11 @@ function SellDrug() {
                 type="button"
                 className="btn-clear-search-x"
                 onClick={() => setSearchTerm("")}
+                title="Clear search"
               >
                 &times;
               </button>
             )}
-          </div>
-
-          {/* Alphabet Quick Filter Ribbon */}
-          <div className="pos-alphabet-ribbon-wrap">
-            <span className="alphabet-ribbon-title">
-              <ArrowDownAZ size={14} /> Filter A–Z:
-            </span>
-            <div className="pos-alphabet-ribbon">
-              {ALPHABETS.map((letter) => (
-                <button
-                  key={letter}
-                  className={`btn-alphabet-pill ${
-                    selectedLetter === letter ? "alphabet-pill-active" : ""
-                  }`}
-                  onClick={() => setSelectedLetter(letter)}
-                >
-                  {letter}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Medicines List */}
@@ -295,7 +262,7 @@ function SellDrug() {
               <div className="pos-loading-state">Loading medicines...</div>
             ) : filteredAndSortedDrugs.length === 0 ? (
               <div className="pos-loading-state">
-                No medicines found matching "{searchTerm || selectedLetter}".
+                No medicines found matching "{searchTerm}".
               </div>
             ) : (
               filteredAndSortedDrugs.map((drug) => (
@@ -388,7 +355,7 @@ function SellDrug() {
                     <tr key={item.id}>
                       <td className="cart-item-name">
                         <Pill size={14} className="cart-pill-icon" />
-                        <span>{item.name}</span>
+                        <span className="cart-item-text">{item.name}</span>
                       </td>
                       <td className="cart-item-qty">
                         <div className="qty-counter-control">

@@ -1092,21 +1092,32 @@ body {
   border: 1px solid #fecaca;
 }
 
-/* 2-Column POS Layout */
+/* Responsive POS Layout */
+.pos-view-page {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .pos-split-grid {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 20px;
   align-items: start;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .pos-catalog-panel,
 .pos-bill-panel {
-  background: #ffffff;
+  background: var(--bg-card);
   border-radius: 16px;
   border: 1px solid var(--border-card);
   box-shadow: var(--shadow-card);
-  padding: 20px;
+  padding: 18px;
+  min-width: 0;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .pos-search-box {
@@ -1324,7 +1335,22 @@ body {
   align-items: center;
   gap: 6px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text-dark);
+  min-width: 0;
+  max-width: 150px;
+}
+
+.cart-item-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  max-width: 130px;
+}
+
+.cart-price-cell,
+.cart-total-cell {
+  white-space: nowrap;
 }
 
 .cart-pill-icon {
@@ -2585,7 +2611,7 @@ body {
 }
 
 /* ==========================================================================
-   SELL MEDICINE (POS) ALPHABET SEARCH & HIGHLIGHTING
+   SELL MEDICINE (POS) SEARCH & HIGHLIGHTING
    ========================================================================== */
 .btn-clear-search-x {
   background: transparent;
@@ -2598,64 +2624,6 @@ body {
 
 .btn-clear-search-x:hover {
   color: var(--text-dark);
-}
-
-.pos-alphabet-ribbon-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.alphabet-ribbon-title {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: var(--gold-dark);
-  white-space: nowrap;
-}
-
-.pos-alphabet-ribbon {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: thin;
-}
-
-.btn-alphabet-pill {
-  min-width: 26px;
-  height: 26px;
-  padding: 0 6px;
-  border-radius: 6px;
-  border: 1px solid var(--border-card);
-  background: var(--bg-card);
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--text-dark);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-}
-
-.btn-alphabet-pill:hover {
-  border-color: var(--gold-primary);
-  background: rgba(245, 158, 11, 0.1);
-}
-
-.alphabet-pill-active {
-  background: var(--gold-gradient) !important;
-  color: #022c22 !important;
-  font-weight: 800 !important;
-  border-color: #d97706 !important;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
 }
 
 .search-highlight-mark {
@@ -2676,4 +2644,83 @@ body {
 .pos-category-sub {
   font-size: 0.72rem;
   color: var(--text-muted);
+}
+
+/* ==========================================================================
+   RESPONSIVE LAYOUT BREAKPOINTS
+   ========================================================================== */
+@media (max-width: 1150px) {
+  .pos-split-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .app-scrollable-content {
+    padding: 12px 20px 28px 20px;
+  }
+
+  .cart-item-name {
+    max-width: none;
+  }
+
+  .cart-item-text {
+    max-width: 260px;
+  }
+
+  .stats-metric-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .stats-metric-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .analytics-dual-charts-row,
+  .dashboard-bottom-section,
+  .reports-split-row {
+    grid-template-columns: 1fr;
+  }
+
+  .reports-metrics-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-sidebar {
+    width: 68px;
+    min-width: 68px;
+    padding: 16px 8px;
+  }
+
+  .brand-text-block,
+  .nav-item-link span,
+  .user-info-text,
+  .user-dropdown-arrow,
+  .btn-logout-sidebar span {
+    display: none;
+  }
+
+  .nav-item-link {
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .app-top-header {
+    padding: 0 16px;
+  }
+
+  .top-search-bar {
+    width: 220px;
+  }
+
+  .date-time-chip {
+    display: none;
+  }
+
+  .stats-metric-grid {
+    grid-template-columns: 1fr;
+  }
 }
