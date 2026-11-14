@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   ShoppingCart,
   Search,
@@ -9,13 +9,18 @@ import {
   CheckCircle2,
   Pill,
   User,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  ArrowDownAZ
 } from "lucide-react";
+
+const ALPHABETS = ["ALL", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")];
 
 function SellDrug() {
   const [drugs, setDrugs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedLetter, setSelectedLetter] = useState("ALL");
   const [cart, setCart] = useState([]);
   const [customerName, setCustomerName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -140,7 +145,7 @@ function SellDrug() {
       setSuccessMessage(
         `Sale completed successfully for ETB ${total.toFixed(2)}!`
       );
-      
+
       // Print receipt
       setTimeout(() => {
         window.print();
@@ -156,9 +161,52 @@ function SellDrug() {
     }
   };
 
-  const filteredDrugs = drugs.filter((d) =>
-    d.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Highlighting matching search characters
+  const renderHighlightedName = (name, query) => {
+    if (!query) return name;
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+    const parts = name.split(regex);
+    return parts.map((part, index) =>
+      part.toLowerCase() === query.toLowerCase() ? (
+        <mark key={index} className="search-highlight-mark">
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    );
+  };
+
+  // Alphabetical and Prioritized Search Filtering
+  const filteredAndSortedDrugs = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+
+    return drugs
+      .filter((drug) => {
+        // Alphabet ribbon filter
+        if (selectedLetter !== "ALL") {
+          if (!drug.name.toUpperCase().startsWith(selectedLetter)) {
+            return false;
+          }
+        }
+        // Search term filter
+        if (q) {
+          return drug.name.toLowerCase().includes(q) || drug.category.toLowerCase().includes(q);
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (q) {
+          const aStarts = a.name.toLowerCase().startsWith(q);
+          const bStarts = b.name.toLowerCase().startsWith(q);
+          // If a starts with query and b doesn't, a comes first
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+        }
+        // Default alphabetical sort
+        return a.name.localeCompare(b.name);
+      });
+  }, [drugs, searchTerm, selectedLetter]);
 
   return (
     <div className="pos-view-page">
@@ -170,7 +218,7 @@ function SellDrug() {
           </div>
           <div>
             <h2 className="main-page-title">Sell Medicine (POS)</h2>
-            <p className="main-page-subtitle">Fast & Easy Billing</p>
+            <p className="main-page-subtitle">Fast & Easy Billing with Alphabetical Search</p>
           </div>
         </div>
 
@@ -201,23 +249,56 @@ function SellDrug() {
       <div className="pos-split-grid">
         {/* Left Side: Drug Selection Catalog */}
         <div className="pos-catalog-panel">
+          {/* Search Box */}
           <div className="pos-search-box">
             <Search size={18} className="pos-search-icon" />
             <input
               type="text"
-              placeholder="Search medicine..."
+              placeholder="Search medicine (e.g. type 'A' for Amoxicillin, Aspirin)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button
+                type="button"
+                className="btn-clear-search-x"
+                onClick={() => setSearchTerm("")}
+              >
+                &times;
+              </button>
+            )}
           </div>
 
+          {/* Alphabet Quick Filter Ribbon */}
+          <div className="pos-alphabet-ribbon-wrap">
+            <span className="alphabet-ribbon-title">
+              <ArrowDownAZ size={14} /> Filter A–Z:
+            </span>
+            <div className="pos-alphabet-ribbon">
+              {ALPHABETS.map((letter) => (
+                <button
+                  key={letter}
+                  className={`btn-alphabet-pill ${
+                    selectedLetter === letter ? "alphabet-pill-active" : ""
+                  }`}
+                  onClick={() => setSelectedLetter(letter)}
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Medicines List */}
           <div className="pos-medicines-list">
             {loading ? (
               <div className="pos-loading-state">Loading medicines...</div>
-            ) : filteredDrugs.length === 0 ? (
-              <div className="pos-loading-state">No medicines found.</div>
+            ) : filteredAndSortedDrugs.length === 0 ? (
+              <div className="pos-loading-state">
+                No medicines found matching "{searchTerm || selectedLetter}".
+              </div>
             ) : (
-              filteredDrugs.map((drug) => (
+              filteredAndSortedDrugs.map((drug) => (
                 <div key={drug.id} className="pos-drug-card-item">
                   <div className="pos-card-left-info">
                     <div className="pos-pill-capsule-icon">
@@ -229,20 +310,25 @@ function SellDrug() {
                       </svg>
                     </div>
                     <div className="pos-drug-title-group">
-                      <h4 className="pos-drug-name">{drug.name}</h4>
-                      <span
-                        className={`pos-stock-tag ${
-                          drug.stock === 0
-                            ? "stock-tag-out"
-                            : drug.stock <= 20
-                            ? "stock-tag-low"
-                            : "stock-tag-in"
-                        }`}
-                      >
-                        {drug.stock === 0
-                          ? "Out of Stock"
-                          : `In Stock: ${drug.stock}`}
-                      </span>
+                      <h4 className="pos-drug-name">
+                        {renderHighlightedName(drug.name, searchTerm)}
+                      </h4>
+                      <div className="pos-meta-line">
+                        <span className="pos-category-sub">{drug.category}</span>
+                        <span
+                          className={`pos-stock-tag ${
+                            drug.stock === 0
+                              ? "stock-tag-out"
+                              : drug.stock <= 20
+                              ? "stock-tag-low"
+                              : "stock-tag-in"
+                          }`}
+                        >
+                          {drug.stock === 0
+                            ? "Out of Stock"
+                            : `In Stock: ${drug.stock}`}
+                        </span>
+                      </div>
                     </div>
                   </div>
 

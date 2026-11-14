@@ -101,30 +101,43 @@ router.get("/daily", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT s.id, d.name as drug_name, s.quantity, s.unit_price, 
-              s.total_price, TO_CHAR(s.sale_date, 'HH12:MI AM') as formatted_time,
+              s.total_price, 
+              TO_CHAR(s.sale_date, 'Mon DD, YYYY') as date_str,
+              TO_CHAR(s.sale_date, 'HH12:MI AM') as time_str,
+              (DATE(s.sale_date) = CURRENT_DATE) as is_today,
+              (DATE(s.sale_date) = CURRENT_DATE - INTERVAL '1 day') as is_yesterday,
               s.sale_date
        FROM sales s 
        JOIN drugs d ON s.drug_id = d.id 
-       WHERE DATE(s.sale_date) = CURRENT_DATE
-       ORDER BY s.sale_date DESC`
+       ORDER BY s.sale_date DESC
+       LIMIT 20`
     );
 
-    // Get today summary
+    // Today summary
     const todayTotal = await pool.query(
-      `SELECT COALESCE(SUM(total_price), 0) as total_revenue,
-              COALESCE(SUM(quantity), 0) as total_items,
-              COALESCE(COUNT(id), 0) as total_transactions
+      `SELECT COALESCE(SUM(total_price), 0) as revenue,
+              COALESCE(SUM(quantity), 0) as items,
+              COALESCE(COUNT(id), 0) as transactions
        FROM sales 
        WHERE DATE(sale_date) = CURRENT_DATE`
     );
 
-    // Overall / 7-day stats for reports page
+    // Week summary (last 7 days)
     const weekStats = await pool.query(
-      `SELECT COALESCE(SUM(total_price), 0) as week_revenue,
-              COALESCE(COUNT(id), 0) as week_transactions,
+      `SELECT COALESCE(SUM(total_price), 0) as revenue,
+              COALESCE(COUNT(id), 0) as transactions,
               COALESCE(AVG(total_price), 0) as avg_sale
        FROM sales 
        WHERE sale_date >= CURRENT_DATE - INTERVAL '7 days'`
+    );
+
+    // Month summary (last 30 days)
+    const monthStats = await pool.query(
+      `SELECT COALESCE(SUM(total_price), 0) as revenue,
+              COALESCE(COUNT(id), 0) as transactions,
+              COALESCE(AVG(total_price), 0) as avg_sale
+       FROM sales 
+       WHERE sale_date >= CURRENT_DATE - INTERVAL '30 days'`
     );
 
     // Top selling drug overall
@@ -153,27 +166,18 @@ router.get("/daily", async (req, res) => {
       ORDER BY days.day ASC
     `);
 
-    // Recent 10 transactions
-    const recentResult = await pool.query(`
-      SELECT s.id, d.name as drug_name, s.quantity, s.unit_price, 
-             s.total_price, TO_CHAR(s.sale_date, 'HH12:MI AM') as formatted_time,
-             TO_CHAR(s.sale_date, 'YYYY-MM-DD') as sale_day
-      FROM sales s 
-      JOIN drugs d ON s.drug_id = d.id 
-      ORDER BY s.sale_date DESC
-      LIMIT 10
-    `);
-
     res.json({
       sales: result.rows,
-      recentSales: recentResult.rows,
+      recentSales: result.rows,
       trend: trendResult.rows,
       summary: {
-        totalRevenue: parseFloat(todayTotal.rows[0].total_revenue),
-        totalItems: parseInt(todayTotal.rows[0].total_items),
-        totalTransactions: parseInt(todayTotal.rows[0].total_transactions),
-        weekRevenue: parseFloat(weekStats.rows[0].week_revenue),
-        weekTransactions: parseInt(weekStats.rows[0].week_transactions),
+        todayRevenue: parseFloat(todayTotal.rows[0].revenue),
+        todayTransactions: parseInt(todayTotal.rows[0].transactions, 10),
+        todayItems: parseInt(todayTotal.rows[0].items, 10),
+        weekRevenue: parseFloat(weekStats.rows[0].revenue),
+        weekTransactions: parseInt(weekStats.rows[0].transactions, 10),
+        monthRevenue: parseFloat(monthStats.rows[0].revenue),
+        monthTransactions: parseInt(monthStats.rows[0].transactions, 10),
         avgSale: parseFloat(weekStats.rows[0].avg_sale),
         topDrug: topDrug.rows[0] ? topDrug.rows[0].name : "N/A"
       },

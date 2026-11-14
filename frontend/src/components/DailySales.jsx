@@ -7,7 +7,10 @@ import {
   Trophy,
   Calendar,
   Clock,
-  ArrowRight
+  ArrowRight,
+  Filter,
+  CheckCircle2,
+  CalendarDays
 } from "lucide-react";
 import {
   LineChart,
@@ -25,16 +28,18 @@ function DailySales() {
     recentSales: [],
     trend: [],
     summary: {
-      totalRevenue: 0,
-      totalItems: 0,
-      totalTransactions: 0,
+      todayRevenue: 0,
+      todayTransactions: 0,
       weekRevenue: 0,
       weekTransactions: 0,
+      monthRevenue: 0,
+      monthTransactions: 0,
       avgSale: 0,
       topDrug: "N/A"
     }
   });
   const [loading, setLoading] = useState(true);
+  const [activePeriod, setActivePeriod] = useState("week"); // "today" | "week" | "month"
 
   const fetchSalesData = async () => {
     try {
@@ -61,6 +66,33 @@ function DailySales() {
     }).format(val || 0);
   };
 
+  // Get current active revenue and transaction values based on classification
+  const getPeriodRevenue = () => {
+    if (activePeriod === "today") {
+      return reportData.summary.todayRevenue || 0;
+    }
+    if (activePeriod === "month") {
+      return reportData.summary.monthRevenue || 0;
+    }
+    return reportData.summary.weekRevenue || 0;
+  };
+
+  const getPeriodTransactions = () => {
+    if (activePeriod === "today") {
+      return reportData.summary.todayTransactions || 0;
+    }
+    if (activePeriod === "month") {
+      return reportData.summary.monthTransactions || 0;
+    }
+    return reportData.summary.weekTransactions || 0;
+  };
+
+  const getPeriodLabel = () => {
+    if (activePeriod === "today") return "Today's";
+    if (activePeriod === "month") return "This Month's";
+    return "This Week's";
+  };
+
   const trendData = reportData.trend && reportData.trend.length > 0
     ? reportData.trend.map(t => ({
         day: t.day_name,
@@ -79,12 +111,52 @@ function DailySales() {
   const recentTransactions = reportData.recentSales && reportData.recentSales.length > 0
     ? reportData.recentSales
     : reportData.sales && reportData.sales.length > 0
-    ? reportData.sales.slice(0, 5)
+    ? reportData.sales
     : [
-        { id: 1, formatted_time: "08:32 PM", drug_name: "Paracetamol", quantity: 2, total_price: 10.00 },
-        { id: 2, formatted_time: "07:50 PM", drug_name: "Amoxicillin", quantity: 1, total_price: 15.00 },
-        { id: 3, formatted_time: "06:15 PM", drug_name: "Metformin", quantity: 1, total_price: 12.00 },
-        { id: 4, formatted_time: "05:40 PM", drug_name: "Aspirin", quantity: 2, total_price: 12.00 }
+        {
+          id: 1,
+          date_str: "Nov 14, 2026",
+          time_str: "04:45 PM",
+          is_today: true,
+          drug_name: "Paracetamol 500mg",
+          quantity: 2,
+          total_price: 10.00
+        },
+        {
+          id: 2,
+          date_str: "Nov 14, 2026",
+          time_str: "03:15 PM",
+          is_today: true,
+          drug_name: "Amoxicillin 500mg",
+          quantity: 1,
+          total_price: 15.00
+        },
+        {
+          id: 3,
+          date_str: "Nov 13, 2026",
+          time_str: "06:20 PM",
+          is_yesterday: true,
+          drug_name: "Metformin 500mg",
+          quantity: 1,
+          total_price: 12.00
+        },
+        {
+          id: 4,
+          date_str: "Nov 13, 2026",
+          time_str: "02:10 PM",
+          is_yesterday: true,
+          drug_name: "Aspirin 75mg",
+          quantity: 2,
+          total_price: 12.00
+        },
+        {
+          id: 5,
+          date_str: "Nov 12, 2026",
+          time_str: "11:30 AM",
+          drug_name: "Ibuprofen 400mg",
+          quantity: 3,
+          total_price: 16.50
+        }
       ];
 
   return (
@@ -97,43 +169,63 @@ function DailySales() {
           </div>
           <div>
             <h2 className="main-page-title">Daily Sales & Reports</h2>
-            <p className="main-page-subtitle">View sales history and generate reports</p>
+            <p className="main-page-subtitle">Track revenue, monitor transactions, and view sales history</p>
           </div>
         </div>
 
-        <div className="date-range-badge-pill">
-          <Calendar size={16} />
-          <span>Last 7 Days (Nov 7 – Nov 13, 2026)</span>
+        {/* Period Classification Switcher Pills */}
+        <div className="period-classification-switch">
+          <button
+            className={`btn-period-pill ${activePeriod === "today" ? "period-pill-active" : ""}`}
+            onClick={() => setActivePeriod("today")}
+          >
+            Today
+          </button>
+          <button
+            className={`btn-period-pill ${activePeriod === "week" ? "period-pill-active" : ""}`}
+            onClick={() => setActivePeriod("week")}
+          >
+            This Week
+          </button>
+          <button
+            className={`btn-period-pill ${activePeriod === "month" ? "period-pill-active" : ""}`}
+            onClick={() => setActivePeriod("month")}
+          >
+            This Month
+          </button>
         </div>
       </div>
 
       {/* 4 Summary Metric Cards */}
       <div className="reports-metrics-row">
-        {/* Card 1: Total Revenue */}
+        {/* Card 1: Classified Revenue */}
         <div className="report-stat-card card-revenue">
           <div className="stat-card-icon-round bg-yellow-circle">
             <Coins size={22} className="text-yellow-600" />
           </div>
           <div className="stat-card-info">
-            <span className="stat-card-title">Total Revenue</span>
+            <div className="stat-card-header-flex">
+              <span className="stat-card-title">{getPeriodLabel()} Revenue</span>
+              <span className="stat-period-tag">{activePeriod.toUpperCase()}</span>
+            </div>
             <span className="stat-card-number">
-              ETB{" "}
-              {reportData.summary.weekRevenue > 0
-                ? formatETB(reportData.summary.weekRevenue)
-                : "84,750"}
+              ETB {formatETB(getPeriodRevenue())}
             </span>
           </div>
         </div>
 
-        {/* Card 2: Total Transactions */}
+        {/* Card 2: Classified Transactions */}
         <div className="report-stat-card card-transactions">
           <div className="stat-card-icon-round bg-blue-circle">
             <Receipt size={22} className="text-blue-600" />
           </div>
           <div className="stat-card-info">
-            <span className="stat-card-title">Total Transactions</span>
+            <div className="stat-card-header-flex">
+              <span className="stat-card-title">{getPeriodLabel()} Transactions</span>
+              <span className="stat-period-tag">{activePeriod.toUpperCase()}</span>
+            </div>
             <span className="stat-card-number">
-              {reportData.summary.weekTransactions || 142}
+              {getPeriodTransactions()} orders
             </span>
           </div>
         </div>
@@ -144,12 +236,9 @@ function DailySales() {
             <Percent size={22} className="text-purple-600" />
           </div>
           <div className="stat-card-info">
-            <span className="stat-card-title">Avg. per Sale</span>
+            <span className="stat-card-title">Avg. Order Value</span>
             <span className="stat-card-number">
-              ETB{" "}
-              {reportData.summary.avgSale > 0
-                ? formatETB(reportData.summary.avgSale)
-                : "597"}
+              ETB {reportData.summary.avgSale > 0 ? formatETB(reportData.summary.avgSale) : "597"}
             </span>
           </div>
         </div>
@@ -175,7 +264,10 @@ function DailySales() {
         {/* Left: Trend Line Chart */}
         <div className="reports-chart-card">
           <div className="reports-card-header">
-            <h4>Sales Trend</h4>
+            <div className="reports-card-title-group">
+              <CalendarDays size={18} className="text-emerald-700" />
+              <h4>Revenue Trend (Last 7 Days)</h4>
+            </div>
           </div>
           <div className="reports-chart-container" style={{ height: 280 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -215,18 +307,18 @@ function DailySales() {
           </div>
         </div>
 
-        {/* Right: Recent Transactions */}
+        {/* Right: Recent Transactions with Specific Date & Smart Time */}
         <div className="reports-transactions-card">
           <div className="reports-card-header">
             <h4>Recent Transactions</h4>
-            <span className="reports-view-all">View All &rarr;</span>
+            <span className="reports-view-all">Total: {recentTransactions.length}</span>
           </div>
 
           <div className="recent-transactions-table-wrap">
             <table className="recent-transactions-table">
               <thead>
                 <tr>
-                  <th>Time</th>
+                  <th>Date & Time</th>
                   <th>Medicine</th>
                   <th style={{ textAlign: "center" }}>Qty</th>
                   <th style={{ textAlign: "right" }}>Amount</th>
@@ -235,9 +327,22 @@ function DailySales() {
               <tbody>
                 {recentTransactions.map((tx, idx) => (
                   <tr key={tx.id || idx}>
-                    <td className="tx-time-cell">
-                      <Clock size={13} className="tx-clock-icon" />
-                      <span>{tx.formatted_time || "Recent"}</span>
+                    <td className="tx-time-cell-detailed">
+                      <div className="tx-date-badge-wrap">
+                        {tx.is_today ? (
+                          <span className="badge-smart-date badge-today">Today</span>
+                        ) : tx.is_yesterday ? (
+                          <span className="badge-smart-date badge-yesterday">Yesterday</span>
+                        ) : (
+                          <span className="badge-smart-date badge-past">
+                            {tx.date_str || "Past"}
+                          </span>
+                        )}
+                        <span className="tx-exact-time">
+                          <Clock size={12} className="tx-clock-inline" />
+                          {tx.time_str || "04:45 PM"}
+                        </span>
+                      </div>
                     </td>
                     <td className="tx-medicine-cell font-semibold text-slate-800">
                       {tx.drug_name}

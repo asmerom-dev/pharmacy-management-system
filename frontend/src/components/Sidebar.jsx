@@ -6,11 +6,13 @@ import {
   TrendingUp,
   Settings,
   LogOut,
-  ChevronDown,
-  UserCheck
+  ChevronDown
 } from "lucide-react";
+import { useSettings } from "../context/SettingsContext";
 
 function Sidebar() {
+  const { settings } = useSettings();
+
   return (
     <aside className="app-sidebar">
       {/* Brand Logo & Header */}
@@ -44,8 +46,12 @@ function Sidebar() {
           </svg>
         </div>
         <div className="brand-text-block">
-          <h1 className="brand-name">Luna<br />Pharmacy</h1>
-          <p className="brand-tagline">Health Today, Better Tomorrow</p>
+          <h1 className="brand-name">
+            {settings.pharmacyName || "Luna Pharmacy"}
+          </h1>
+          <p className="brand-tagline">
+            {settings.tagline || "Health Today, Better Tomorrow"}
+          </p>
         </div>
       </div>
 
@@ -107,24 +113,36 @@ function Sidebar() {
       <div className="sidebar-bottom-panel">
         <div className="user-profile-badge">
           <div className="user-avatar-circle">
-            <svg viewBox="0 0 36 36" fill="none" className="avatar-doctor-svg">
-              <circle cx="18" cy="18" r="18" fill="#047857" />
-              <circle cx="18" cy="13" r="6" fill="#FDE68A" />
-              <path
-                d="M7 32C7 26 12 23 18 23C24 23 29 26 29 32"
-                fill="#10B981"
+            {settings.pharmacistPhoto ? (
+              <img
+                src={settings.pharmacistPhoto}
+                alt={settings.pharmacistName}
+                className="user-custom-avatar-img"
               />
-              <path
-                d="M15 24V28M21 24V28M15 28C15 29.6 16.3 31 18 31C19.7 31 21 29.6 21 28"
-                stroke="#FDE68A"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-              />
-            </svg>
+            ) : (
+              <svg viewBox="0 0 36 36" fill="none" className="avatar-doctor-svg">
+                <circle cx="18" cy="18" r="18" fill="#047857" />
+                <circle cx="18" cy="13" r="6" fill="#FDE68A" />
+                <path
+                  d="M7 32C7 26 12 23 18 23C24 23 29 26 29 32"
+                  fill="#10B981"
+                />
+                <path
+                  d="M15 24V28M21 24V28M15 28C15 29.6 16.3 31 18 31C19.7 31 21 29.6 21 28"
+                  stroke="#FDE68A"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
           </div>
           <div className="user-info-text">
-            <h4 className="user-name">Asme Teklay</h4>
-            <span className="user-role">Pharmacist</span>
+            <h4 className="user-name">
+              {settings.pharmacistName || "Asme Teklay"}
+            </h4>
+            <span className="user-role">
+              {settings.pharmacistRole || "Pharmacist"}
+            </span>
           </div>
           <ChevronDown size={16} className="user-dropdown-arrow" />
         </div>

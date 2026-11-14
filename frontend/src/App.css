@@ -1941,3 +1941,739 @@ body {
     margin: 0 auto !important;
   }
 }
+
+
+/* ==========================================================================
+   DARK THEME VARIABLES & OVERRIDES
+   ========================================================================== */
+[data-theme="dark"] {
+  --bg-app: #06140e;
+  --bg-app-gradient: radial-gradient(circle at 80% 10%, #0c2419 0%, #06140e 45%, #030a07 100%);
+  --bg-card: #0c2016;
+  --bg-card-subtle: #0f271b;
+  --text-dark: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-light: #64748b;
+  --border-light: rgba(255, 255, 255, 0.1);
+  --border-card: rgba(212, 175, 55, 0.22);
+  --shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .app-sidebar {
+  background: linear-gradient(180deg, #011a0e 0%, #032b19 55%, #01120a 100%);
+}
+
+[data-theme="dark"] .top-search-bar,
+[data-theme="dark"] .notification-bell-btn,
+[data-theme="dark"] .date-time-chip,
+[data-theme="dark"] .header-theme-toggle-btn {
+  background: #0c2016;
+  border-color: var(--border-card);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .top-search-bar input {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .main-page-title,
+[data-theme="dark"] .metric-value-huge,
+[data-theme="dark"] .stat-card-number,
+[data-theme="dark"] .pos-drug-name,
+[data-theme="dark"] .chart-header-title h3,
+[data-theme="dark"] .quick-actions-title h4,
+[data-theme="dark"] .health-card-text h5,
+[data-theme="dark"] .pos-bill-header h3,
+[data-theme="dark"] .settings-section-header h4 {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .search-filter-input-wrap,
+[data-theme="dark"] .filter-select-custom,
+[data-theme="dark"] .pos-search-box,
+[data-theme="dark"] .pos-drug-card-item,
+[data-theme="dark"] .pos-customer-input-wrapper,
+[data-theme="dark"] .table-pagination-footer,
+[data-theme="dark"] .form-group-custom input,
+[data-theme="dark"] .form-group-custom select {
+  background: #0f271b;
+  border-color: rgba(212, 175, 55, 0.2);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .search-filter-input-wrap input,
+[data-theme="dark"] .pos-search-box input,
+[data-theme="dark"] .pos-customer-input-wrapper input {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .inventory-table td {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .pos-drug-card-item:hover {
+  background: #143525;
+}
+
+[data-theme="dark"] .qty-counter-control {
+  background: #143525;
+}
+
+[data-theme="dark"] .btn-qty-step {
+  background: #0c2016;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .btn-print-pos-tool {
+  background: #0c2016;
+  border-color: var(--border-card);
+  color: #34d399;
+}
+
+/* ==========================================================================
+   HEADER THEME TOGGLE & NOTIFICATION SYSTEM
+   ========================================================================== */
+.header-theme-toggle-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid var(--border-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+  color: #d97706;
+}
+
+.header-theme-toggle-btn:hover {
+  transform: rotate(20deg) scale(1.05);
+  border-color: var(--gold-primary);
+}
+
+.theme-sun-icon { color: #f59e0b; }
+.theme-moon-icon { color: #3b82f6; }
+
+/* Notification Dropdown */
+.notification-wrapper-relative {
+  position: relative;
+}
+
+.bell-active {
+  background: #fffbeb !important;
+  border-color: var(--gold-primary) !important;
+  color: var(--gold-dark) !important;
+}
+
+.notifications-dropdown-menu {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  width: 380px;
+  background: var(--bg-card);
+  border-radius: 18px;
+  border: 1.5px solid var(--gold-glow);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+  overflow: hidden;
+  animation: dropdownSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdownSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.notif-dropdown-header {
+  padding: 14px 18px;
+  background: var(--bg-card-subtle);
+  border-bottom: 1px solid var(--border-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notif-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notif-header-title h4 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.notif-pill-count {
+  font-size: 0.7rem;
+  font-weight: 800;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.btn-mark-read {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #059669;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.btn-mark-read:hover {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.notif-items-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.notif-item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.notif-item-row:hover {
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.notif-unread {
+  background: rgba(245, 158, 11, 0.03);
+}
+
+.notif-icon-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notif-type-danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.notif-type-warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.notif-type-success {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.notif-text-content {
+  flex: 1;
+}
+
+.notif-title-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.notif-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.notif-time {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.notif-message {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.25;
+}
+
+.notif-arrow {
+  color: var(--text-light);
+  opacity: 0.6;
+}
+
+.notif-empty-state {
+  padding: 32px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.notif-empty-state p {
+  font-weight: 700;
+  color: var(--text-dark);
+  font-size: 0.9rem;
+}
+
+.notif-empty-state span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.notif-dropdown-footer {
+  padding: 10px 18px;
+  background: var(--bg-card-subtle);
+  border-top: 1px solid var(--border-card);
+  text-align: center;
+}
+
+.btn-view-all-inventory {
+  background: transparent;
+  border: none;
+  color: #047857;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.btn-view-all-inventory:hover {
+  color: var(--gold-dark);
+}
+
+/* ==========================================================================
+   SETTINGS COMPONENT ENHANCEMENTS
+   ========================================================================== */
+.settings-form-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 720px;
+}
+
+.settings-alert-anim {
+  animation: fadeInDown 0.3s ease;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Theme Options */
+.theme-selection-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.theme-option-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--bg-card-subtle);
+  border: 2px solid var(--border-card);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.theme-option-box:hover {
+  border-color: var(--gold-primary);
+  transform: translateY(-2px);
+}
+
+.theme-option-selected {
+  border-color: var(--gold-primary) !important;
+  background: rgba(245, 158, 11, 0.08) !important;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.2);
+}
+
+.theme-preview-pill {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.light-preview {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+}
+
+.dark-preview {
+  background: #022c22;
+  border: 1px solid #047857;
+}
+
+.theme-label-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.theme-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.theme-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.theme-radio-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border-card);
+}
+
+.theme-option-selected .theme-radio-dot {
+  background: var(--gold-primary);
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+}
+
+/* Profile Photo Upload */
+.profile-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-avatar-large {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 3px solid var(--gold-glow);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card-subtle);
+  flex-shrink: 0;
+}
+
+.avatar-large-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-large-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.user-custom-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profile-actions-column h5 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.profile-photo-hint {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin: 4px 0 12px 0;
+  max-width: 440px;
+}
+
+.profile-photo-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-upload-photo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #064e3b;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 18px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-upload-photo:hover {
+  background: #047857;
+  transform: translateY(-1px);
+}
+
+.btn-remove-photo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 8px 14px;
+  border-radius: 18px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.field-hint-text {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.settings-footer-action {
+  padding-top: 10px;
+}
+
+.btn-save-large {
+  padding: 14px 28px;
+  font-size: 0.95rem;
+  display: inline-flex;
+}
+
+/* ==========================================================================
+   DAILY SALES PERIOD CLASSIFICATION & DATE BADGES
+   ========================================================================== */
+.period-classification-switch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  padding: 4px;
+  border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-period-pill {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-period-pill:hover {
+  color: var(--text-dark);
+}
+
+.period-pill-active {
+  background: linear-gradient(135deg, #013720 0%, #064e3b 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(6, 78, 59, 0.3);
+}
+
+.stat-card-header-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stat-period-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--gold-dark);
+  background: rgba(245, 158, 11, 0.15);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.reports-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Smart Date & Time Badges in Table */
+.tx-time-cell-detailed {
+  display: flex;
+  align-items: center;
+}
+
+.tx-date-badge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-smart-date {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.badge-today {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.badge-yesterday {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.badge-past {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-muted);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.tx-exact-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.tx-clock-inline {
+  color: var(--gold-dark);
+}
+
+/* ==========================================================================
+   SELL MEDICINE (POS) ALPHABET SEARCH & HIGHLIGHTING
+   ========================================================================== */
+.btn-clear-search-x {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.btn-clear-search-x:hover {
+  color: var(--text-dark);
+}
+
+.pos-alphabet-ribbon-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.alphabet-ribbon-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--gold-dark);
+  white-space: nowrap;
+}
+
+.pos-alphabet-ribbon {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.btn-alphabet-pill {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border-card);
+  background: var(--bg-card);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.btn-alphabet-pill:hover {
+  border-color: var(--gold-primary);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.alphabet-pill-active {
+  background: var(--gold-gradient) !important;
+  color: #022c22 !important;
+  font-weight: 800 !important;
+  border-color: #d97706 !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+}
+
+.search-highlight-mark {
+  background: #fde047;
+  color: #022c22;
+  font-weight: 800;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+.pos-meta-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+}
+
+.pos-category-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
