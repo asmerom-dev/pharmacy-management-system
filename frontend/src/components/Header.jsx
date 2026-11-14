@@ -11,7 +11,8 @@ import {
   Clock,
   Check,
   ChevronRight,
-  Sparkles
+  Eye,
+  CheckCheck
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
@@ -25,6 +26,21 @@ function Header() {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const { settings, toggleTheme } = useSettings();
+
+  const getStoredReadIds = () => {
+    try {
+      const raw = localStorage.getItem("luna_read_notification_ids");
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const saveStoredReadIds = (ids) => {
+    try {
+      localStorage.setItem("luna_read_notification_ids", JSON.stringify(ids));
+    } catch (e) {}
+  };
 
   useEffect(() => {
     const updateTime = () => {
@@ -53,6 +69,7 @@ function Header() {
       if (res.ok) {
         const drugs = await res.json();
         const list = [];
+        const readIds = getStoredReadIds();
 
         // 1. Check out-of-stock
         const outOfStock = drugs.filter((d) => d.stock === 0);
@@ -64,7 +81,7 @@ function Header() {
             message: `${d.name} is completely out of stock!`,
             time: "Immediate action required",
             drugName: d.name,
-            read: false,
+            read: readIds.includes(`out-${d.id}`),
           });
         });
 
@@ -78,7 +95,7 @@ function Header() {
             message: `Only ${d.stock} units left for ${d.name}.`,
             time: "Restock recommended",
             drugName: d.name,
-            read: false,
+            read: readIds.includes(`low-${d.id}`),
           });
         });
 
@@ -89,11 +106,11 @@ function Header() {
           title: "System Status",
           message: "Database and POS system are synchronized.",
           time: "Just now",
-          read: false,
+          read: readIds.includes("sys-ready"),
         });
 
         setNotifications(list);
-        setUnreadCount(list.length);
+        setUnreadCount(list.filter((n) => !n.read).length);
       }
     } catch (err) {
       console.error("Failed to load notifications:", err);
@@ -122,12 +139,34 @@ function Header() {
     }
   };
 
+  // Mark single notification as read
+  const markSingleAsRead = (id, e) => {
+    if (e) e.stopPropagation();
+    const readIds = getStoredReadIds();
+    if (!readIds.includes(id)) {
+      const updated = [...readIds, id];
+      saveStoredReadIds(updated);
+    }
+
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+  };
+
+  // Mark all notifications as read
   const markAllAsRead = () => {
+    const allIds = notifications.map((n) => n.id);
+    saveStoredReadIds(allIds);
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
   };
 
+  // Handle clicking notification item
   const handleNotificationClick = (n) => {
+    if (!n.read) {
+      markSingleAsRead(n.id);
+    }
     if (n.drugName) {
       navigate(`/drugs?search=${encodeURIComponent(n.drugName)}`);
     } else {
@@ -188,11 +227,15 @@ function Header() {
                     <span className="notif-pill-count">{unreadCount} New</span>
                   )}
                 </div>
-                {unreadCount > 0 && (
+                {unreadCount > 0 ? (
                   <button className="btn-mark-read" onClick={markAllAsRead}>
-                    <Check size={13} />
+                    <CheckCheck size={14} />
                     <span>Mark all read</span>
                   </button>
+                ) : (
+                  <span className="notif-all-caught-up">
+                    <CheckCircle2 size={13} className="text-emerald-500" /> All caught up
+                  </span>
                 )}
               </div>
 
@@ -222,7 +265,25 @@ function Header() {
                         </div>
                         <p className="notif-message">{n.message}</p>
                       </div>
-                      <ChevronRight size={14} className="notif-arrow" />
+
+                      {/* Read status indicator and individual checkmark */}
+                      <div className="notif-status-action">
+                        {n.read ? (
+                          <span className="notif-badge-read" title="Read">
+                            <Check size={12} /> Read
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn-mark-single-read"
+                            title="Mark as read"
+                            onClick={(e) => markSingleAsRead(n.id, e)}
+                          >
+                            <Check size={12} />
+                          </button>
+                        )}
+                        <ChevronRight size={14} className="notif-arrow" />
+                      </div>
                     </div>
                   ))
                 )}

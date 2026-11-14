@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   TrendingUp,
   Coins,
@@ -10,7 +10,8 @@ import {
   ArrowRight,
   Filter,
   CheckCircle2,
-  CalendarDays
+  CalendarDays,
+  RefreshCw
 } from "lucide-react";
 import {
   LineChart,
@@ -39,7 +40,7 @@ function DailySales() {
     }
   });
   const [loading, setLoading] = useState(true);
-  const [activePeriod, setActivePeriod] = useState("week"); // "today" | "week" | "month"
+  const [activePeriod, setActivePeriod] = useState("today"); // Default to "today" so today's sales are prominent!
 
   const fetchSalesData = async () => {
     try {
@@ -62,14 +63,83 @@ function DailySales() {
 
   const formatETB = (val) => {
     return new Intl.NumberFormat("en-US", {
-      maximumFractionDigits: 0
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2
     }).format(val || 0);
   };
 
-  // Get current active revenue and transaction values based on classification
+  // Helper to parse dates and smart labels (Today / Yesterday / Specific Date)
+  const parseSaleDateInfo = (saleDate) => {
+    if (!saleDate) {
+      return { isToday: true, isYesterday: false, dateStr: "Today", timeStr: "Just now" };
+    }
+    const d = new Date(saleDate);
+    if (isNaN(d.getTime())) {
+      return { isToday: false, isYesterday: false, dateStr: "Recent", timeStr: "Recent" };
+    }
+
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday = d.toDateString() === yesterday.toDateString();
+
+    const dateStr = d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+    const timeStr = d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+
+    return { isToday, isYesterday, dateStr, timeStr };
+  };
+
+  // Extract recent sales list from API response
+  const rawTransactions = useMemo(() => {
+    const list = reportData.recentSales || reportData.sales || [];
+    return list;
+  }, [reportData]);
+
+  // Client-side calculations to ensure timezone-accurate metrics
+  const { calculatedTodayRevenue, calculatedTodayCount, processedTransactions } = useMemo(() => {
+    let todayRev = 0;
+    let todayCount = 0;
+
+    const processed = rawTransactions.map((tx) => {
+      const dateInfo = parseSaleDateInfo(tx.sale_date);
+      const totalNum = parseFloat(tx.total_price || 0);
+
+      if (dateInfo.isToday) {
+        todayRev += totalNum;
+        todayCount += 1;
+      }
+
+      return {
+        ...tx,
+        ...dateInfo,
+        displayName: tx.drug_name || tx.name || "Medication",
+        parsedPrice: totalNum
+      };
+    });
+
+    return {
+      calculatedTodayRevenue: todayRev,
+      calculatedTodayCount: todayCount,
+      processedTransactions: processed
+    };
+  }, [rawTransactions]);
+
+  // Active revenue based on selected period
   const getPeriodRevenue = () => {
     if (activePeriod === "today") {
-      return reportData.summary.todayRevenue || 0;
+      return calculatedTodayRevenue > 0
+        ? calculatedTodayRevenue
+        : reportData.summary.todayRevenue || 0;
     }
     if (activePeriod === "month") {
       return reportData.summary.monthRevenue || 0;
@@ -79,7 +149,9 @@ function DailySales() {
 
   const getPeriodTransactions = () => {
     if (activePeriod === "today") {
-      return reportData.summary.todayTransactions || 0;
+      return calculatedTodayCount > 0
+        ? calculatedTodayCount
+        : reportData.summary.todayTransactions || 0;
     }
     if (activePeriod === "month") {
       return reportData.summary.monthTransactions || 0;
@@ -94,7 +166,7 @@ function DailySales() {
   };
 
   const trendData = reportData.trend && reportData.trend.length > 0
-    ? reportData.trend.map(t => ({
+    ? reportData.trend.map((t) => ({
         day: t.day_name,
         revenue: parseFloat(t.revenue) || 0
       }))
@@ -106,57 +178,6 @@ function DailySales() {
         { day: "Fri", revenue: 58000 },
         { day: "Sat", revenue: 84750 },
         { day: "Sun", revenue: 62000 }
-      ];
-
-  const recentTransactions = reportData.recentSales && reportData.recentSales.length > 0
-    ? reportData.recentSales
-    : reportData.sales && reportData.sales.length > 0
-    ? reportData.sales
-    : [
-        {
-          id: 1,
-          date_str: "Nov 14, 2026",
-          time_str: "04:45 PM",
-          is_today: true,
-          drug_name: "Paracetamol 500mg",
-          quantity: 2,
-          total_price: 10.00
-        },
-        {
-          id: 2,
-          date_str: "Nov 14, 2026",
-          time_str: "03:15 PM",
-          is_today: true,
-          drug_name: "Amoxicillin 500mg",
-          quantity: 1,
-          total_price: 15.00
-        },
-        {
-          id: 3,
-          date_str: "Nov 13, 2026",
-          time_str: "06:20 PM",
-          is_yesterday: true,
-          drug_name: "Metformin 500mg",
-          quantity: 1,
-          total_price: 12.00
-        },
-        {
-          id: 4,
-          date_str: "Nov 13, 2026",
-          time_str: "02:10 PM",
-          is_yesterday: true,
-          drug_name: "Aspirin 75mg",
-          quantity: 2,
-          total_price: 12.00
-        },
-        {
-          id: 5,
-          date_str: "Nov 12, 2026",
-          time_str: "11:30 AM",
-          drug_name: "Ibuprofen 400mg",
-          quantity: 3,
-          total_price: 16.50
-        }
       ];
 
   return (
@@ -238,7 +259,7 @@ function DailySales() {
           <div className="stat-card-info">
             <span className="stat-card-title">Avg. Order Value</span>
             <span className="stat-card-number">
-              ETB {reportData.summary.avgSale > 0 ? formatETB(reportData.summary.avgSale) : "597"}
+              ETB {reportData.summary.avgSale > 0 ? formatETB(reportData.summary.avgSale) : "597.00"}
             </span>
           </div>
         </div>
@@ -310,53 +331,72 @@ function DailySales() {
         {/* Right: Recent Transactions with Specific Date & Smart Time */}
         <div className="reports-transactions-card">
           <div className="reports-card-header">
-            <h4>Recent Transactions</h4>
-            <span className="reports-view-all">Total: {recentTransactions.length}</span>
+            <div className="reports-card-title-group">
+              <h4>Recent Transactions</h4>
+              <span className="reports-view-all">
+                ({processedTransactions.length} recorded)
+              </span>
+            </div>
+            <button
+              className="btn-refresh-tx"
+              onClick={fetchSalesData}
+              title="Refresh Sales"
+            >
+              <RefreshCw size={14} className={loading ? "spin-icon" : ""} />
+            </button>
           </div>
 
           <div className="recent-transactions-table-wrap">
-            <table className="recent-transactions-table">
-              <thead>
-                <tr>
-                  <th>Date & Time</th>
-                  <th>Medicine</th>
-                  <th style={{ textAlign: "center" }}>Qty</th>
-                  <th style={{ textAlign: "right" }}>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentTransactions.map((tx, idx) => (
-                  <tr key={tx.id || idx}>
-                    <td className="tx-time-cell-detailed">
-                      <div className="tx-date-badge-wrap">
-                        {tx.is_today ? (
-                          <span className="badge-smart-date badge-today">Today</span>
-                        ) : tx.is_yesterday ? (
-                          <span className="badge-smart-date badge-yesterday">Yesterday</span>
-                        ) : (
-                          <span className="badge-smart-date badge-past">
-                            {tx.date_str || "Past"}
-                          </span>
-                        )}
-                        <span className="tx-exact-time">
-                          <Clock size={12} className="tx-clock-inline" />
-                          {tx.time_str || "04:45 PM"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="tx-medicine-cell font-semibold text-slate-800">
-                      {tx.drug_name}
-                    </td>
-                    <td className="tx-qty-cell" style={{ textAlign: "center" }}>
-                      {tx.quantity}
-                    </td>
-                    <td className="tx-amount-cell" style={{ textAlign: "right" }}>
-                      ETB {parseFloat(tx.total_price).toFixed(2)}
-                    </td>
+            {processedTransactions.length === 0 ? (
+              <div className="pos-cart-empty">
+                <Receipt size={36} className="empty-cart-icon" />
+                <p>No sales recorded yet</p>
+                <span>Sales made in Sell Medicine will appear here automatically</span>
+              </div>
+            ) : (
+              <table className="recent-transactions-table">
+                <thead>
+                  <tr>
+                    <th>Date & Time</th>
+                    <th>Medicine</th>
+                    <th style={{ textAlign: "center" }}>Qty</th>
+                    <th style={{ textAlign: "right" }}>Amount</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {processedTransactions.map((tx) => (
+                    <tr key={tx.id}>
+                      <td className="tx-time-cell-detailed">
+                        <div className="tx-date-badge-wrap">
+                          {tx.isToday ? (
+                            <span className="badge-smart-date badge-today">Today</span>
+                          ) : tx.isYesterday ? (
+                            <span className="badge-smart-date badge-yesterday">Yesterday</span>
+                          ) : (
+                            <span className="badge-smart-date badge-past">
+                              {tx.dateStr}
+                            </span>
+                          )}
+                          <span className="tx-exact-time">
+                            <Clock size={12} className="tx-clock-inline" />
+                            {tx.timeStr}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="tx-medicine-cell font-semibold text-slate-800">
+                        {tx.displayName}
+                      </td>
+                      <td className="tx-qty-cell" style={{ textAlign: "center" }}>
+                        {tx.quantity}
+                      </td>
+                      <td className="tx-amount-cell" style={{ textAlign: "right" }}>
+                        ETB {tx.parsedPrice.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>
