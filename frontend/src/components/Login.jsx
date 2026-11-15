@@ -5,10 +5,10 @@ import {
   User,
   Eye,
   EyeOff,
-  ShieldCheck,
+  Shield,
   AlertCircle,
   ArrowRight,
-  Sparkles
+  Check
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -28,7 +28,7 @@ function Login() {
     setError("");
 
     if (!username.trim() || !password) {
-      setError("Please enter both your username and password.");
+      setError("Please enter both username and password.");
       return;
     }
 
@@ -44,122 +44,137 @@ function Login() {
   };
 
   return (
-    <div className="login-page-container">
-      {/* Background Decorative Glow */}
-      <div className="login-bg-glow-top" />
-      <div className="login-bg-glow-bottom" />
+    <div className="eyerus-login-page">
+      {/* Background Ambience Layers */}
+      <div className="eyerus-login-bg-overlay" />
+      <div className="eyerus-login-golden-glow-top" />
+      <div className="eyerus-login-golden-glow-bottom" />
 
-      <div className="login-card-wrapper">
-        {/* Brand Header */}
-        <div className="login-brand-header">
-          <div className="login-logo-circle">
-            <svg viewBox="0 0 44 44" className="brand-cross-svg" fill="none">
-              <path
-                d="M16 4C16 2.89543 16.8954 2 18 2H26C27.1046 2 28 2.89543 28 4V16H40C41.1046 16 42 16.8954 42 18V26C42 27.1046 41.1046 28 40 28H28V40C28 41.1046 27.1046 42 26 42H18C16.8954 42 16 41.1046 16 40V28H4C2.89543 28 2 27.1046 2 26V18C2 16.8954 2.89543 16 4 16H16V4Z"
-                fill="url(#loginGoldGrad)"
-              />
-              <path
-                d="M22 10C24 14 31 16 33 24C34 28 30 33 25 33C21 33 17 30 18 26C19 22 21 16 22 10Z"
-                fill="#10B981"
-              />
-              <path
-                d="M22 18C24 22 28 25 29 28"
-                stroke="#047857"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-              <defs>
-                <linearGradient id="loginGoldGrad" x1="2" y1="2" x2="42" y2="42" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FDE68A" />
-                  <stop offset="0.4" stopColor="#F59E0B" />
-                  <stop offset="1" stopColor="#D97706" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-
-          <h1 className="login-app-title">Eyerus Pharmacy</h1>
-          <p className="login-app-subtitle">Owner & Pharmacist Access Portal</p>
+      <div className="eyerus-login-content-flow">
+        {/* Top Logo Badge */}
+        <div className="eyerus-logo-badge-wrapper">
+          <img
+            src="/login-logo-badge.png"
+            alt="Eyerus Pharmacy Logo"
+            className="eyerus-logo-badge-img"
+          />
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div className="login-error-banner">
-            <AlertCircle size={18} className="text-red-500" />
-            <span>{error}</span>
-          </div>
-        )}
+        {/* Brand Header */}
+        <div className="eyerus-brand-title-wrap">
+          <h1 className="eyerus-main-title">
+            <span className="title-white">Eyerus </span>
+            <span className="title-gold">Pharmacy</span>
+          </h1>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="login-form-body">
-          <div className="login-input-group">
-            <label>Username</label>
-            <div className="login-input-field-wrap">
-              <User size={18} className="login-field-icon" />
-              <input
-                type="text"
-                placeholder="Enter Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-                required
-              />
-            </div>
+          <div className="eyerus-subtitle-row">
+            <span className="sub-gold-line" />
+            <span className="sub-text">Owner & Pharmacist Access Portal</span>
+            <span className="sub-gold-line" />
+          </div>
+        </div>
+
+        {/* Login Card with 3D Pills Accent on Top */}
+        <div className="eyerus-card-outer">
+          {/* 3D Medicine Bottle & Pills Accent sitting on top edge */}
+          <div className="eyerus-pills-accent-wrap">
+            <img
+              src="/pills-accent.png"
+              alt="Medicine Bottle & Pills"
+              className="eyerus-pills-accent-img"
+            />
           </div>
 
-          <div className="login-input-group">
-            <label>Password</label>
-            <div className="login-input-field-wrap">
-              <Lock size={18} className="login-field-icon" />
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter Your Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                required
-              />
+          <div className="eyerus-card-inner">
+            {/* Error Alert */}
+            {error && (
+              <div className="eyerus-error-banner">
+                <AlertCircle size={17} className="text-red-400" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="eyerus-form">
+              {/* Username Field */}
+              <div className="eyerus-input-wrap">
+                <User size={20} className="eyerus-input-icon-gold" />
+                <input
+                  type="text"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                  required
+                />
+              </div>
+
+              {/* Password Field */}
+              <div className="eyerus-input-wrap">
+                <Lock size={20} className="eyerus-input-icon-gold" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="eyerus-eye-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} className="text-gray-300" />
+                  ) : (
+                    <Eye size={20} className="text-gray-300" />
+                  )}
+                </button>
+              </div>
+
+              {/* Remember this device Checkbox */}
+              <div className="eyerus-remember-row">
+                <label className="eyerus-custom-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  <span className="eyerus-checkbox-custom">
+                    {rememberMe && <Check size={14} strokeWidth={3.5} className="text-black" />}
+                  </span>
+                  <span className="remember-text">Remember this device</span>
+                </label>
+              </div>
+
+              {/* Sign In Button */}
               <button
-                type="button"
-                className="btn-toggle-password"
-                onClick={() => setShowPassword(!showPassword)}
-                title={showPassword ? "Hide password" : "Show password"}
+                type="submit"
+                className="eyerus-btn-signin"
+                disabled={submitting}
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                <Lock size={19} className="btn-lock-icon" />
+                <span className="btn-text">
+                  {submitting ? "Signing In..." : "Sign In"}
+                </span>
+                <ArrowRight size={20} className="btn-arrow-icon" />
               </button>
+            </form>
+
+            {/* Bottom Secure Access Divider */}
+            <div className="eyerus-secure-footer">
+              <span className="secure-line" />
+              <div className="secure-badge">
+                <div className="shield-icon-wrap">
+                  <Shield size={16} className="shield-icon-gold" />
+                  <Lock size={9} className="shield-inner-lock" />
+                </div>
+                <span>Secure Access</span>
+              </div>
+              <span className="secure-line" />
             </div>
-          </div>
-
-          <div className="login-options-row">
-            <label className="remember-checkbox-label">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              />
-              <span>Remember this device</span>
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            className="btn-login-submit"
-            disabled={submitting}
-          >
-            <Lock size={17} />
-            <span>{submitting ? "Signing In..." : "Sign In"}</span>
-            <ArrowRight size={17} className="btn-login-arrow" />
-          </button>
-        </form>
-
-        {/* Security & Default Info */}
-        <div className="login-footer-info">
-          <div className="login-security-tag">
-            <ShieldCheck size={15} className="text-emerald-400" />
-            <span>End-to-End Encrypted</span>
-          </div>
-          <div className="login-default-hint">
-            <span>Owner Portal Access</span>
           </div>
         </div>
       </div>
