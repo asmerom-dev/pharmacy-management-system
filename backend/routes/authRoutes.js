@@ -28,6 +28,15 @@ async function initializeUsersTable() {
         ["admin", defaultHash, "owner"]
       );
       console.log("🔒 Initialized default owner account: username 'admin', password 'luna1234'");
+    } else {
+      // If the admin has the initial placeholder hash, auto-update it to luna1234
+      const adminUser = res.rows[0];
+      const testMatch = await bcrypt.compare("luna1234", adminUser.password_hash);
+      if (!testMatch && adminUser.password_hash.startsWith("$2a$10$wY9eE2vM")) {
+        const defaultHash = await bcrypt.hash("luna1234", 10);
+        await pool.query("UPDATE users SET password_hash = $1 WHERE username = 'admin'", [defaultHash]);
+        console.log("🔒 Auto-healed admin account to valid luna1234 hash");
+      }
     }
   } catch (err) {
     console.error("Notice during user table initialization:", err.message);

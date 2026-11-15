@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- Insert default owner account (username: admin, password: luna1234)
 -- The hash below is generated with bcryptjs for password 'luna1234'
 INSERT INTO users (username, password_hash, role)
-VALUES ('admin', '$2a$10$wY9eE2vM2h8h8Y/w7zM5QeL0N3qP1vR6xY8sK2uW0iT5jM9mB2l2K', 'owner')
+VALUES ('admin', '$2b$10$AjdqedRwDsdoncMJHmRWmeU93c/d8VcC/UQiViHjp4rBUcmCeYbE6', 'owner')
 ON CONFLICT (username) DO NOTHING;
 
 -- 2. Create the drugs table
