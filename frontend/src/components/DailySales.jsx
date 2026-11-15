@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { apiFetch } from "../api";
 import {
   TrendingUp,
   Coins,
@@ -45,7 +46,7 @@ function DailySales() {
   const fetchSalesData = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/sales/daily");
+      const res = await apiFetch("/api/sales/daily");
       if (res.ok) {
         const data = await res.json();
         setReportData(data);

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { apiFetch } from "../api";
 import {
   Pill,
   Plus,
@@ -30,7 +31,7 @@ function AllDrugs() {
   const fetchDrugs = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/drugs");
+      const res = await apiFetch("/api/drugs");
       if (res.ok) {
         const data = await res.json();
         setDrugs(data);
@@ -54,7 +55,7 @@ function AllDrugs() {
   const handleDelete = async (id, name) => {
     if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
       try {
-        const res = await fetch(`/api/drugs/${id}`, { method: "DELETE" });
+        const res = await apiFetch(`/api/drugs/${id}`, { method: "DELETE" });
         if (res.ok) {
           setDrugs(drugs.filter((d) => d.id !== id));
         } else {

@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Pill,
@@ -9,9 +9,19 @@ import {
   ChevronDown
 } from "lucide-react";
 import { useSettings } from "../context/SettingsContext";
+import { useAuth } from "../context/AuthContext";
 
 function Sidebar() {
   const { settings } = useSettings();
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to sign out of the Luna Pharmacy Portal?")) {
+      logout();
+      navigate("/login");
+    }
+  };
 
   return (
     <aside className="app-sidebar">
@@ -149,7 +159,8 @@ function Sidebar() {
 
         <button
           className="btn-logout-sidebar"
-          onClick={() => alert("Logged out successfully!")}
+          onClick={handleLogout}
+          title="Sign out of Owner Portal"
         >
           <LogOut size={16} />
           <span>Logout</span>

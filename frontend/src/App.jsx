@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
@@ -6,8 +6,10 @@ import AllDrugs from "./components/AllDrugs";
 import SellDrug from "./components/SellDrug";
 import DailySales from "./components/DailySales";
 import Settings from "./components/Settings";
+import Login from "./components/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-function App() {
+function MainLayout() {
   return (
     <div className="app-layout-container">
       {/* Fixed Left Sidebar */}
@@ -23,10 +25,25 @@ function App() {
             <Route path="/sell" element={<SellDrug />} />
             <Route path="/daily-sales" element={<DailySales />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      {/* Public Login Route */}
+      <Route path="/login" element={<Login />} />
+
+      {/* Protected Owner Routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/*" element={<MainLayout />} />
+      </Route>
+    </Routes>
   );
 }
 

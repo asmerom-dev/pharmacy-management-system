@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiFetch } from "../api";
 import {
   Activity,
   AlertTriangle,
@@ -45,7 +46,7 @@ function Dashboard() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/drugs/stats/dashboard");
+      const res = await apiFetch("/api/drugs/stats/dashboard");
       if (res.ok) {
         const data = await res.json();
         setStats(data);

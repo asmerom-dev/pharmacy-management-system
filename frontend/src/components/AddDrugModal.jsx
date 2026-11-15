@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiFetch } from "../api";
 import { X, Pill, Save, Calendar, Tag, DollarSign, Layers } from "lucide-react";
 
 function AddDrugModal({ isOpen, onClose, onDrugAdded }) {
@@ -42,7 +43,7 @@ function AddDrugModal({ isOpen, onClose, onDrugAdded }) {
 
     try {
       setLoading(true);
-      const res = await fetch("/api/drugs", {
+      const res = await apiFetch("/api/drugs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

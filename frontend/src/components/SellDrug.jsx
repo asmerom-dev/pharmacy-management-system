@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { apiFetch } from "../api";
 import {
   ShoppingCart,
   Search,
@@ -25,7 +26,7 @@ function SellDrug() {
   const fetchDrugs = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/drugs");
+      const res = await apiFetch("/api/drugs");
       if (res.ok) {
         const data = await res.json();
         setDrugs(data);
@@ -126,7 +127,7 @@ function SellDrug() {
         })),
       };
 
-      const res = await fetch("/api/sales", {
+      const res = await apiFetch("/api/sales", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

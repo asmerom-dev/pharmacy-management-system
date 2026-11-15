@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
+import { apiFetch } from "../api";
 
 function Header() {
   const [currentTime, setCurrentTime] = useState("");
@@ -65,7 +66,7 @@ function Header() {
   // Fetch real notifications from drug inventory
   const loadNotifications = async () => {
     try {
-      const res = await fetch("/api/drugs");
+      const res = await apiFetch("/api/drugs");
       if (res.ok) {
         const drugs = await res.json();
         const list = [];

@@ -9,12 +9,17 @@ import {
   Sun,
   Moon,
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
+  KeyRound,
+  AlertCircle
 } from "lucide-react";
 import { useSettings } from "../context/SettingsContext";
+import { useAuth } from "../context/AuthContext";
 
 function Settings() {
   const { settings, updateSettings } = useSettings();
+  const { changePassword } = useAuth();
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -29,6 +34,16 @@ function Settings() {
   });
 
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Password change state
+  const [pwData, setPwData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [pwSuccess, setPwSuccess] = useState("");
+  const [pwError, setPwError] = useState("");
+  const [pwSubmitting, setPwSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,6 +82,39 @@ function Settings() {
     setTimeout(() => setSavedSuccess(false), 3500);
   };
 
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPwError("");
+    setPwSuccess("");
+
+    if (!pwData.currentPassword || !pwData.newPassword) {
+      setPwError("Please enter both current and new password.");
+      return;
+    }
+
+    if (pwData.newPassword.length < 6) {
+      setPwError("New password must be at least 6 characters long.");
+      return;
+    }
+
+    if (pwData.newPassword !== pwData.confirmPassword) {
+      setPwError("New passwords do not match.");
+      return;
+    }
+
+    try {
+      setPwSubmitting(true);
+      await changePassword(pwData.currentPassword, pwData.newPassword);
+      setPwSuccess("Master password updated successfully!");
+      setPwData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setTimeout(() => setPwSuccess(""), 4000);
+    } catch (err) {
+      setPwError(err.message || "Failed to update password.");
+    } finally {
+      setPwSubmitting(false);
+    }
+  };
+
   return (
     <div className="settings-view-page">
       <div className="page-intro-header">
@@ -77,7 +125,7 @@ function Settings() {
           <div>
             <h2 className="main-page-title">Settings & Customization</h2>
             <p className="main-page-subtitle">
-              Configure your pharmacy branding, theme, pharmacist profile, and financial preferences
+              Configure your pharmacy branding, theme, pharmacist profile, security, and financial preferences
             </p>
           </div>
         </div>
@@ -298,6 +346,77 @@ function Settings() {
           </button>
         </div>
       </form>
+
+      {/* Section 5: Owner Password & Security (Separate Form) */}
+      <div className="settings-section-card" style={{ marginTop: "24px" }}>
+        <div className="settings-section-header">
+          <Lock size={18} className="text-emerald-700" />
+          <h4>Owner Security & Master Password</h4>
+        </div>
+
+        {pwSuccess && (
+          <div className="pos-alert alert-success" style={{ marginBottom: "16px" }}>
+            <CheckCircle2 size={18} />
+            <span>{pwSuccess}</span>
+          </div>
+        )}
+
+        {pwError && (
+          <div className="pos-alert alert-danger" style={{ marginBottom: "16px" }}>
+            <AlertCircle size={18} />
+            <span>{pwError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handlePasswordSubmit} className="settings-fields-group">
+          <div className="form-row-split">
+            <div className="form-group-custom">
+              <label>Current Master Password</label>
+              <input
+                type="password"
+                placeholder="Enter current password (default: luna1234)"
+                value={pwData.currentPassword}
+                onChange={(e) => setPwData({ ...pwData, currentPassword: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="form-group-custom">
+              <label>New Master Password</label>
+              <input
+                type="password"
+                placeholder="At least 6 characters"
+                value={pwData.newPassword}
+                onChange={(e) => setPwData({ ...pwData, newPassword: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group-custom" style={{ maxWidth: "50%" }}>
+            <label>Confirm New Password</label>
+            <input
+              type="password"
+              placeholder="Re-type new password"
+              value={pwData.confirmPassword}
+              onChange={(e) => setPwData({ ...pwData, confirmPassword: e.target.value })}
+              required
+            />
+          </div>
+
+          <div style={{ marginTop: "12px" }}>
+            <button
+              type="submit"
+              className="btn-action-emerald"
+              disabled={pwSubmitting}
+              style={{ display: "inline-flex", width: "auto", padding: "10px 24px" }}
+            >
+              <KeyRound size={16} />
+              <span>{pwSubmitting ? "Updating..." : "Update Master Password"}</span>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

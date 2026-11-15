@@ -1,9 +1,24 @@
 -- =============================================
--- Pharmacy Management System - Database Setup
--- Run this file to create tables and sample data
+-- Luna Pharmacy Management System - Database Setup
+-- Run this file to create tables, sample data, and owner account
 -- =============================================
 
--- Create the drugs table
+-- 1. Create the users table (Owner Authentication)
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(50) DEFAULT 'owner',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Insert default owner account (username: admin, password: luna1234)
+-- The hash below is generated with bcryptjs for password 'luna1234'
+INSERT INTO users (username, password_hash, role)
+VALUES ('admin', '$2a$10$wY9eE2vM2h8h8Y/w7zM5QeL0N3qP1vR6xY8sK2uW0iT5jM9mB2l2K', 'owner')
+ON CONFLICT (username) DO NOTHING;
+
+-- 2. Create the drugs table
 CREATE TABLE IF NOT EXISTS drugs (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -14,7 +29,7 @@ CREATE TABLE IF NOT EXISTS drugs (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Create the sales table
+-- 3. Create the sales table
 CREATE TABLE IF NOT EXISTS sales (
     id SERIAL PRIMARY KEY,
     drug_id INTEGER REFERENCES drugs(id) ON DELETE CASCADE,
@@ -45,7 +60,8 @@ INSERT INTO drugs (name, category, price, stock) VALUES
     ('Ranitidine 150mg', 'Gastric', 4.00, 0),
     ('Aspirin 75mg', 'Blood Thinner', 2.50, 350),
     ('Clopidogrel 75mg', 'Blood Thinner', 13.00, 0),
-    ('Vitamin C 500mg', 'Vitamin', 3.50, 400);
+    ('Vitamin C 500mg', 'Vitamin', 3.50, 400)
+ON CONFLICT DO NOTHING;
 
 -- Insert some sample sales for testing
 INSERT INTO sales (drug_id, quantity, unit_price, total_price, sale_date) VALUES
