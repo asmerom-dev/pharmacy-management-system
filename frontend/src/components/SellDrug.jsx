@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { apiFetch } from "../api";
+import { useSettings } from "../context/SettingsContext";
 import {
   ShoppingCart,
   Search,
@@ -10,18 +11,28 @@ import {
   CheckCircle2,
   Pill,
   User,
+  Phone,
+  MessageSquare,
+  Copy,
+  Check,
+  X,
   AlertCircle
 } from "lucide-react";
 
 function SellDrug() {
+  const { settings } = useSettings();
   const [drugs, setDrugs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [cart, setCart] = useState([]);
   const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [receiptData, setReceiptData] = useState(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [copiedSMS, setCopiedSMS] = useState(false);
 
   const fetchDrugs = async () => {
     try {
@@ -120,7 +131,7 @@ function SellDrug() {
       setErrorMessage("");
 
       const payload = {
-        customer_name: customerName || "Walk-in Customer",
+        customer_name: customerName ? `${customerName.trim()}${customerPhone ? ` (${customerPhone.trim()})` : ""}` : "Walk-in Customer",
         items: cart.map((item) => ({
           drug_id: item.id,
           quantity: item.quantity,
@@ -142,19 +153,88 @@ function SellDrug() {
         `Sale completed successfully for ETB ${total.toFixed(2)}!`
       );
 
-      // Print receipt
-      setTimeout(() => {
-        window.print();
-      }, 300);
+      // Create Receipt Card Data
+      const completedReceipt = {
+        receiptNumber: `EP-${Date.now().toString().slice(-6)}`,
+        date: new Date().toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        }),
+        time: new Date().toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true
+        }),
+        customerName: customerName.trim() || "Walk-in Customer",
+        customerPhone: customerPhone.trim(),
+        items: cart.map((i) => ({
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+          total: i.price * i.quantity
+        })),
+        subtotal,
+        tax,
+        total,
+        pharmacyName: settings.pharmacyName || "Eyerus Pharmacy",
+        tagline: settings.tagline || "Health Today, Better Tomorrow"
+      };
+
+      setReceiptData(completedReceipt);
+      setShowReceiptModal(true);
 
       clearCart();
       setCustomerName("");
+      setCustomerPhone("");
       fetchDrugs(); // Refresh stock
     } catch (err) {
       setErrorMessage(err.message);
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handlePrintSlip = () => {
+    window.print();
+  };
+
+  const generateReceiptText = () => {
+    if (!receiptData) return "";
+    return [
+      `🧾 ${receiptData.pharmacyName.toUpperCase()}`,
+      `${receiptData.tagline}`,
+      `Receipt: #${receiptData.receiptNumber}`,
+      `Date: ${receiptData.date}  ${receiptData.time}`,
+      `Customer: ${receiptData.customerName}`,
+      receiptData.customerPhone ? `Phone: ${receiptData.customerPhone}` : null,
+      `--------------------------------`,
+      ...receiptData.items.map(
+        (it) => `• ${it.name} (x${it.quantity}): ETB ${it.total.toFixed(2)}`
+      ),
+      `--------------------------------`,
+      `Subtotal: ETB ${receiptData.subtotal.toFixed(2)}`,
+      `Tax (15%): ETB ${receiptData.tax.toFixed(2)}`,
+      `TOTAL: ETB ${receiptData.total.toFixed(2)}`,
+      `--------------------------------`,
+      `Thank you for choosing ${receiptData.pharmacyName}!`,
+      `Get well soon 🌿`
+    ].filter(Boolean).join("\n");
+  };
+
+  const handleSendSMS = () => {
+    if (!receiptData) return;
+    const text = generateReceiptText();
+    const phone = receiptData.customerPhone ? receiptData.customerPhone.replace(/[^0-9+]/g, "") : "";
+    const smsUrl = `sms:${phone}?body=${encodeURIComponent(text)}`;
+    window.open(smsUrl, "_blank");
+  };
+
+  const handleCopySMS = () => {
+    const text = generateReceiptText();
+    navigator.clipboard.writeText(text);
+    setCopiedSMS(true);
+    setTimeout(() => setCopiedSMS(false), 2500);
   };
 
   // Highlighting matching search characters
@@ -404,6 +484,20 @@ function SellDrug() {
             </div>
           </div>
 
+          {/* Customer Phone Number for SMS */}
+          <div className="pos-customer-input-box" style={{ marginTop: "10px" }}>
+            <label>Customer Phone Number (for SMS Receipt)</label>
+            <div className="pos-customer-input-wrapper">
+              <Phone size={16} className="input-user-icon" />
+              <input
+                type="tel"
+                placeholder="e.g. 0911234567"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+              />
+            </div>
+          </div>
+
           {/* Totals & Calculations */}
           <div className="pos-financial-breakdown">
             <div className="breakdown-line">
@@ -422,7 +516,7 @@ function SellDrug() {
             </div>
           </div>
 
-          {/* Checkout & Print Button */}
+          {/* Checkout & Generate Receipt Button */}
           <button
             className="btn-checkout-print"
             disabled={cart.length === 0 || isProcessing}
@@ -430,11 +524,156 @@ function SellDrug() {
           >
             <ShoppingCart size={18} />
             <span>
-              {isProcessing ? "Processing Sale..." : "Checkout & Print"}
+              {isProcessing ? "Processing Sale..." : "Checkout & Generate Receipt"}
             </span>
           </button>
         </div>
       </div>
+
+      {/* =========================================================================
+          PRINTABLE SMALL RECEIPT CARD & SMS MODAL
+          ========================================================================= */}
+      {showReceiptModal && receiptData && (
+        <div className="receipt-modal-backdrop">
+          <div className="receipt-modal-dialog">
+            {/* Modal Top Bar */}
+            <div className="receipt-modal-header no-print">
+              <div className="receipt-modal-title">
+                <CheckCircle2 size={20} className="text-emerald-500" />
+                <span>Sale Completed Successfully</span>
+              </div>
+              <button
+                className="btn-close-receipt-modal"
+                onClick={() => setShowReceiptModal(false)}
+                title="Close"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* The Actual Small Printable Receipt Card */}
+            <div id="printable-receipt-card" className="receipt-thermal-card">
+              <div className="receipt-card-header">
+                <div className="receipt-cross-symbol">🌿</div>
+                <h2 className="receipt-pharmacy-name">{receiptData.pharmacyName}</h2>
+                <p className="receipt-pharmacy-tagline">{receiptData.tagline}</p>
+                <div className="receipt-divider-dash" />
+                
+                <div className="receipt-details-list">
+                  <div className="receipt-detail-row">
+                    <span>Receipt #:</span>
+                    <strong>{receiptData.receiptNumber}</strong>
+                  </div>
+                  <div className="receipt-detail-row">
+                    <span>Date & Time:</span>
+                    <span>{receiptData.date} {receiptData.time}</span>
+                  </div>
+                  <div className="receipt-detail-row">
+                    <span>Customer:</span>
+                    <strong>{receiptData.customerName}</strong>
+                  </div>
+                  {receiptData.customerPhone && (
+                    <div className="receipt-detail-row">
+                      <span>Phone:</span>
+                      <strong>{receiptData.customerPhone}</strong>
+                    </div>
+                  )}
+                </div>
+                <div className="receipt-divider-dash" />
+              </div>
+
+              {/* Items Purchased Table */}
+              <table className="receipt-items-table">
+                <thead>
+                  <tr>
+                    <th align="left">Medication</th>
+                    <th align="center">Qty</th>
+                    <th align="right">Price</th>
+                    <th align="right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {receiptData.items.map((item, idx) => (
+                    <tr key={idx}>
+                      <td className="receipt-item-name">{item.name}</td>
+                      <td align="center">x{item.quantity}</td>
+                      <td align="right">{item.price.toFixed(2)}</td>
+                      <td align="right"><strong>{item.total.toFixed(2)}</strong></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="receipt-divider-dash" />
+
+              {/* Financial Totals */}
+              <div className="receipt-financial-totals">
+                <div className="receipt-detail-row">
+                  <span>Subtotal:</span>
+                  <span>ETB {receiptData.subtotal.toFixed(2)}</span>
+                </div>
+                <div className="receipt-detail-row">
+                  <span>Tax (15% VAT):</span>
+                  <span>ETB {receiptData.tax.toFixed(2)}</span>
+                </div>
+                <div className="receipt-grand-total-row">
+                  <span>GRAND TOTAL:</span>
+                  <span>ETB {receiptData.total.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="receipt-divider-dash" />
+
+              {/* Friendly Closing Footer */}
+              <div className="receipt-card-footer">
+                <p className="footer-thanks">Thank you for visiting {receiptData.pharmacyName}!</p>
+                <p className="footer-wish">Get well soon! 💊✨</p>
+                <div className="receipt-barcode-visual">
+                  ||| | ||||| || |||||| | ||| |||| | |||||
+                </div>
+              </div>
+            </div>
+
+            {/* Actions for User (Hidden during Print) */}
+            <div className="receipt-modal-actions-panel no-print">
+              <button
+                type="button"
+                className="btn-receipt-action btn-print-card"
+                onClick={handlePrintSlip}
+              >
+                <Printer size={18} />
+                <span>Print Small Card Slip</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn-receipt-action btn-send-sms"
+                onClick={handleSendSMS}
+              >
+                <MessageSquare size={18} />
+                <span>Send via SMS Message</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn-receipt-action btn-copy-sms"
+                onClick={handleCopySMS}
+              >
+                {copiedSMS ? <Check size={18} /> : <Copy size={18} />}
+                <span>{copiedSMS ? "Copied SMS Text!" : "Copy Receipt Text"}</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn-receipt-action btn-close-flow"
+                onClick={() => setShowReceiptModal(false)}
+              >
+                <span>New Sale / Done</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

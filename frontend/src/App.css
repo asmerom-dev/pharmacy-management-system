@@ -3236,3 +3236,312 @@ body {
   font-size: 0.84rem;
   color: var(--text-muted);
 }
+
+/* ==========================================================================
+   RECEIPT CARD & SMS MODAL STYLES
+   ========================================================================== */
+.receipt-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.receipt-modal-dialog {
+  background: #091710;
+  border: 1.5px solid rgba(251, 191, 36, 0.45);
+  border-radius: 24px;
+  padding: 24px;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), 0 0 30px rgba(245, 158, 11, 0.2);
+  animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.receipt-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.receipt-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #f1f5f9;
+  font-size: 0.98rem;
+}
+
+.btn-close-receipt-modal {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-close-receipt-modal:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+/* The Paper Receipt Card */
+.receipt-thermal-card {
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 12px;
+  padding: 24px 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  border: 1px dashed #cbd5e1;
+}
+
+.receipt-card-header {
+  text-align: center;
+}
+
+.receipt-cross-symbol {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.receipt-pharmacy-name {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.receipt-pharmacy-tagline {
+  font-size: 0.74rem;
+  color: #64748b;
+  margin: 2px 0 12px 0;
+}
+
+.receipt-divider-dash {
+  border-top: 1px dashed #94a3b8;
+  margin: 10px 0;
+}
+
+.receipt-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #334155;
+  text-align: left;
+}
+
+.receipt-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.receipt-items-table {
+  width: 100%;
+  font-size: 0.8rem;
+  border-collapse: collapse;
+  margin: 6px 0;
+}
+
+.receipt-items-table th {
+  border-bottom: 1px solid #cbd5e1;
+  padding: 4px 2px;
+  font-weight: 700;
+  color: #475569;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+}
+
+.receipt-items-table td {
+  padding: 6px 2px;
+  color: #1e293b;
+  vertical-align: top;
+}
+
+.receipt-item-name {
+  max-width: 140px;
+  word-break: break-word;
+  font-weight: 600;
+}
+
+.receipt-financial-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #334155;
+}
+
+.receipt-grand-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.98rem;
+  font-weight: 900;
+  color: #0f172a;
+  padding-top: 6px;
+  margin-top: 4px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.receipt-card-footer {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.footer-thanks {
+  margin: 0;
+  font-weight: 600;
+  color: #334155;
+}
+
+.footer-wish {
+  margin: 2px 0 8px 0;
+  color: #059669;
+  font-weight: 700;
+}
+
+.receipt-barcode-visual {
+  font-family: monospace;
+  letter-spacing: 2.5px;
+  font-size: 0.75rem;
+  color: #64748b;
+  user-select: none;
+}
+
+/* Actions Panel */
+.receipt-modal-actions-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.btn-receipt-action {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.btn-print-card {
+  background: linear-gradient(135deg, #fde68a 0%, #f59e0b 50%, #d97706 100%);
+  color: #022415;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);
+}
+
+.btn-print-card:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+}
+
+.btn-send-sms {
+  background: #10b981;
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-send-sms:hover {
+  background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.btn-copy-sms {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-copy-sms:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.btn-close-flow {
+  background: transparent;
+  color: #94a3b8;
+  padding: 8px;
+  font-size: 0.85rem;
+}
+
+.btn-close-flow:hover {
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   PRINT MEDIA RULES - ONLY PRINT THE SMALL RECEIPT CARD SLIP
+   ========================================================================== */
+@media print {
+  /* Hide the rest of the app */
+  body * {
+    visibility: hidden !important;
+  }
+
+  .receipt-modal-backdrop {
+    position: static !important;
+    background: none !important;
+    padding: 0 !important;
+  }
+
+  .receipt-modal-dialog {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    background: none !important;
+    max-width: 100% !important;
+  }
+
+  /* Make ONLY the receipt card and its children visible */
+  #printable-receipt-card,
+  #printable-receipt-card * {
+    visibility: visible !important;
+  }
+
+  #printable-receipt-card {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 78mm !important; /* Compact 80mm POS receipt size */
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 12px !important;
+    box-shadow: none !important;
+    border: 1px dashed #999 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
