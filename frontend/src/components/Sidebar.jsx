@@ -17,7 +17,7 @@ function Sidebar() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to sign out of the Luna Pharmacy Portal?")) {
+    if (window.confirm("Are you sure you want to sign out of the Eyerus Pharmacy Portal?")) {
       logout();
       navigate("/login");
     }
@@ -57,7 +57,7 @@ function Sidebar() {
         </div>
         <div className="brand-text-block">
           <h1 className="brand-name">
-            {settings.pharmacyName || "Luna Pharmacy"}
+            {settings.pharmacyName || "Eyerus Pharmacy"}
           </h1>
           <p className="brand-tagline">
             {settings.tagline || "Health Today, Better Tomorrow"}

@@ -23,7 +23,7 @@ function Settings() {
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
-    pharmacyName: settings.pharmacyName || "Luna Pharmacy",
+    pharmacyName: settings.pharmacyName || "Eyerus Pharmacy",
     tagline: settings.tagline || "Health Today, Better Tomorrow",
     pharmacistName: settings.pharmacistName || "Asme Teklay",
     pharmacistRole: settings.pharmacistRole || "Pharmacist",
@@ -282,7 +282,7 @@ function Settings() {
                 name="pharmacyName"
                 value={formData.pharmacyName}
                 onChange={handleChange}
-                placeholder="e.g. Luna Pharmacy"
+                placeholder="e.g. Eyerus Pharmacy"
                 required
               />
             </div>

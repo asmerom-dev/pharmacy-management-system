@@ -13,7 +13,7 @@ function ProtectedRoute() {
             <Activity size={28} />
           </div>
           <h3>Verifying Owner Authorization...</h3>
-          <p>Connecting to Luna Pharmacy secure gateway</p>
+          <p>Connecting to Eyerus Pharmacy secure gateway</p>
         </div>
       </div>
     );

@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
 const DEFAULT_SETTINGS = {
-  pharmacyName: "Luna Pharmacy",
+  pharmacyName: "Eyerus Pharmacy",
   tagline: "Health Today, Better Tomorrow",
   pharmacistName: "Asme Teklay",
   pharmacistRole: "Pharmacist",

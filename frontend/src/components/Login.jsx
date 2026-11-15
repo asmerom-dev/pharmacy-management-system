@@ -78,7 +78,7 @@ function Login() {
             </svg>
           </div>
 
-          <h1 className="login-app-title">Luna Pharmacy</h1>
+          <h1 className="login-app-title">Eyerus Pharmacy</h1>
           <p className="login-app-subtitle">Owner & Pharmacist Access Portal</p>
         </div>
 
@@ -93,12 +93,12 @@ function Login() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="login-form-body">
           <div className="login-input-group">
-            <label>Username / Email</label>
+            <label>Username</label>
             <div className="login-input-field-wrap">
               <User size={18} className="login-field-icon" />
               <input
                 type="text"
-                placeholder="Enter username (e.g. admin)"
+                placeholder="Enter Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -108,12 +108,12 @@ function Login() {
           </div>
 
           <div className="login-input-group">
-            <label>Master Password</label>
+            <label>Password</label>
             <div className="login-input-field-wrap">
               <Lock size={18} className="login-field-icon" />
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
+                placeholder="Enter Your Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
@@ -147,7 +147,7 @@ function Login() {
             disabled={submitting}
           >
             <Lock size={17} />
-            <span>{submitting ? "Signing In..." : "Sign In to Dashboard"}</span>
+            <span>{submitting ? "Signing In..." : "Sign In"}</span>
             <ArrowRight size={17} className="btn-login-arrow" />
           </button>
         </form>
@@ -155,12 +155,11 @@ function Login() {
         {/* Security & Default Info */}
         <div className="login-footer-info">
           <div className="login-security-tag">
-            <ShieldCheck size={14} className="text-emerald-500" />
-            <span>End-to-End Encrypted Session • Owner Only</span>
+            <ShieldCheck size={15} className="text-emerald-400" />
+            <span>End-to-End Encrypted</span>
           </div>
           <div className="login-default-hint">
-            <span>Default Access:</span> <code>admin</code> / <code>luna1234</code>
-            <p className="hint-sub">You can customize your username and password anytime in Settings.</p>
+            <span>Owner Portal Access</span>
           </div>
         </div>
       </div>
