@@ -148,10 +148,10 @@ function Sidebar() {
           </div>
           <div className="user-info-text">
             <h4 className="user-name">
-              {settings.pharmacistName || "Asme Teklay"}
+              {settings.pharmacistName || "Eyerus Gebremariam"}
             </h4>
             <span className="user-role">
-              {settings.pharmacistRole || "Pharmacist"}
+              {settings.pharmacistRole || "Chief Pharmacist"}
             </span>
           </div>
           <ChevronDown size={16} className="user-dropdown-arrow" />

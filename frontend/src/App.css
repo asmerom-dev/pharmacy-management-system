@@ -1432,6 +1432,129 @@ body {
   font-size: 0.85rem;
 }
 
+/* Digital Receipt Option Group */
+.pos-digital-receipt-box {
+  margin-top: 14px;
+  margin-bottom: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.pos-field-heading {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+
+.pos-digital-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pos-digital-opt-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.pos-digital-opt-pill:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.pos-digital-opt-pill.active-skip {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.pos-digital-opt-pill.active-whatsapp {
+  background: #ecfdf5;
+  border-color: #10b981;
+  color: #065f46;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+}
+
+.pos-digital-opt-pill.active-telegram {
+  background: #f0f9ff;
+  border-color: #0284c7;
+  color: #0369a1;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.2);
+}
+
+.pill-dot {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.pill-label {
+  flex: 1;
+}
+
+.pos-digital-hint {
+  font-size: 0.74rem;
+  margin-top: 8px;
+  margin-bottom: 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.pos-digital-hint.hint-wa {
+  background: rgba(37, 211, 102, 0.1);
+  color: #047857;
+}
+
+.pos-digital-hint.hint-tg {
+  background: rgba(34, 158, 217, 0.1);
+  color: #0284c7;
+}
+
+.pos-digital-hint.hint-skip {
+  background: rgba(148, 163, 184, 0.15);
+  color: #475569;
+}
+
+.btn-checkout-whatsapp {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+}
+
+.btn-checkout-whatsapp:hover:not(:disabled) {
+  background: linear-gradient(135deg, #047857 0%, #059669 100%) !important;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35) !important;
+}
+
+.btn-checkout-telegram {
+  background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%) !important;
+}
+
+.btn-checkout-telegram:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%) !important;
+  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.35) !important;
+}
+
+.btn-checkout-skip {
+  background: linear-gradient(135deg, #013720 0%, #064e3b 100%) !important;
+}
+
 .pos-financial-breakdown {
   border-top: 1px dashed #cbd5e1;
   padding-top: 12px;
@@ -3464,16 +3587,28 @@ body {
   box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
 }
 
-.btn-send-sms {
-  background: #10b981;
+.btn-send-whatsapp {
+  background: #25D366;
   color: #ffffff;
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.35);
 }
 
-.btn-send-sms:hover {
-  background: #059669;
+.btn-send-whatsapp:hover {
+  background: #1eb956;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
+}
+
+.btn-send-telegram {
+  background: #229ED9;
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(34, 158, 217, 0.35);
+}
+
+.btn-send-telegram:hover {
+  background: #1c88bd;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(34, 158, 217, 0.45);
 }
 
 .btn-copy-sms {

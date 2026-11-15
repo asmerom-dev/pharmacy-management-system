@@ -27,8 +27,10 @@ import {
   Legend
 } from "recharts";
 import AddDrugModal from "./AddDrugModal";
+import { useSettings } from "../context/SettingsContext";
 
 function Dashboard() {
+  const { settings } = useSettings();
   const [stats, setStats] = useState({
     totalDrugs: 0,
     totalUnits: 0,
@@ -106,7 +108,7 @@ function Dashboard() {
           </div>
           <div>
             <h2 className="main-page-title">Dashboard</h2>
-            <p className="main-page-subtitle">Welcome back, Asme Teklay!</p>
+            <p className="main-page-subtitle">Welcome back, {settings.pharmacistName || "Eyerus Gebremariam"}!</p>
           </div>
         </div>
       </div>

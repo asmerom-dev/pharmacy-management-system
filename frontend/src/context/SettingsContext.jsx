@@ -3,8 +3,8 @@ import { createContext, useContext, useState, useEffect } from "react";
 const DEFAULT_SETTINGS = {
   pharmacyName: "Eyerus Pharmacy",
   tagline: "Health Today, Better Tomorrow",
-  pharmacistName: "Asme Teklay",
-  pharmacistRole: "Pharmacist",
+  pharmacistName: "Eyerus Gebremariam",
+  pharmacistRole: "Chief Pharmacist",
   pharmacistPhoto: "",
   theme: "light",
   currency: "ETB",
@@ -22,7 +22,14 @@ export function SettingsProvider({ children }) {
     try {
       const saved = localStorage.getItem("luna_pharmacy_settings");
       if (saved) {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        if (!parsed.pharmacistName || parsed.pharmacistName === "Asme Teklay") {
+          parsed.pharmacistName = "Eyerus Gebremariam";
+        }
+        if (!parsed.pharmacistRole || parsed.pharmacistRole === "Pharmacist") {
+          parsed.pharmacistRole = "Chief Pharmacist";
+        }
+        return { ...DEFAULT_SETTINGS, ...parsed };
       }
     } catch (e) {
       console.error("Failed to parse settings from localStorage:", e);

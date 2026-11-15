@@ -25,8 +25,8 @@ function Settings() {
   const [formData, setFormData] = useState({
     pharmacyName: settings.pharmacyName || "Eyerus Pharmacy",
     tagline: settings.tagline || "Health Today, Better Tomorrow",
-    pharmacistName: settings.pharmacistName || "Asme Teklay",
-    pharmacistRole: settings.pharmacistRole || "Pharmacist",
+    pharmacistName: settings.pharmacistName || "Eyerus Gebremariam",
+    pharmacistRole: settings.pharmacistRole || "Chief Pharmacist",
     pharmacistPhoto: settings.pharmacistPhoto || "",
     theme: settings.theme || "light",
     currency: settings.currency || "ETB",
@@ -247,7 +247,7 @@ function Settings() {
                   name="pharmacistName"
                   value={formData.pharmacistName}
                   onChange={handleChange}
-                  placeholder="e.g. Asme Teklay"
+                  placeholder="e.g. Eyerus Gebremariam"
                   required
                 />
               </div>
@@ -259,7 +259,7 @@ function Settings() {
                   name="pharmacistRole"
                   value={formData.pharmacistRole}
                   onChange={handleChange}
-                  placeholder="e.g. Pharmacist, Pharmacy Director"
+                  placeholder="e.g. Chief Pharmacist, Pharmacy Director"
                   required
                 />
               </div>

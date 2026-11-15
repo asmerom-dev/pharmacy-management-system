@@ -32,7 +32,7 @@ function SellDrug() {
   const [errorMessage, setErrorMessage] = useState("");
   const [receiptData, setReceiptData] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [copiedSMS, setCopiedSMS] = useState(false);
+  const [digitalReceiptOption, setDigitalReceiptOption] = useState("skip"); // "skip" | "whatsapp" | "telegram"
 
   const fetchDrugs = async () => {
     try {
@@ -184,6 +184,13 @@ function SellDrug() {
       setReceiptData(completedReceipt);
       setShowReceiptModal(true);
 
+      // Trigger automatic receipt delivery based on chosen option
+      if (digitalReceiptOption === "whatsapp") {
+        handleSendWhatsApp(completedReceipt);
+      } else if (digitalReceiptOption === "telegram") {
+        handleSendTelegram(completedReceipt);
+      }
+
       clearCart();
       setCustomerName("");
       setCustomerPhone("");
@@ -199,42 +206,57 @@ function SellDrug() {
     window.print();
   };
 
-  const generateReceiptText = () => {
-    if (!receiptData) return "";
+  const generateReceiptText = (customData = null) => {
+    const data = customData || receiptData;
+    if (!data) return "";
     return [
-      `🧾 ${receiptData.pharmacyName.toUpperCase()}`,
-      `${receiptData.tagline}`,
-      `Receipt: #${receiptData.receiptNumber}`,
-      `Date: ${receiptData.date}  ${receiptData.time}`,
-      `Customer: ${receiptData.customerName}`,
-      receiptData.customerPhone ? `Phone: ${receiptData.customerPhone}` : null,
+      `🧾 ${data.pharmacyName.toUpperCase()}`,
+      `${data.tagline}`,
       `--------------------------------`,
-      ...receiptData.items.map(
+      `Receipt: #${data.receiptNumber}`,
+      `Date: ${data.date}  ${data.time}`,
+      `Customer: ${data.customerName}`,
+      data.customerPhone ? `Phone: ${data.customerPhone}` : null,
+      `--------------------------------`,
+      ...data.items.map(
         (it) => `• ${it.name} (x${it.quantity}): ETB ${it.total.toFixed(2)}`
       ),
       `--------------------------------`,
-      `Subtotal: ETB ${receiptData.subtotal.toFixed(2)}`,
-      `Tax (15%): ETB ${receiptData.tax.toFixed(2)}`,
-      `TOTAL: ETB ${receiptData.total.toFixed(2)}`,
+      `Subtotal: ETB ${data.subtotal.toFixed(2)}`,
+      `Tax (15%): ETB ${data.tax.toFixed(2)}`,
+      `GRAND TOTAL: ETB ${data.total.toFixed(2)}`,
       `--------------------------------`,
-      `Thank you for choosing ${receiptData.pharmacyName}!`,
+      `Thank you for choosing ${data.pharmacyName}!`,
       `Get well soon 🌿`
     ].filter(Boolean).join("\n");
   };
 
-  const handleSendSMS = () => {
-    if (!receiptData) return;
-    const text = generateReceiptText();
-    const phone = receiptData.customerPhone ? receiptData.customerPhone.replace(/[^0-9+]/g, "") : "";
-    const smsUrl = `sms:${phone}?body=${encodeURIComponent(text)}`;
-    window.open(smsUrl, "_blank");
+  const formatPhoneForWhatsApp = (rawPhone) => {
+    if (!rawPhone) return "";
+    let clean = rawPhone.replace(/[^0-9]/g, "");
+    if (clean.startsWith("0")) {
+      clean = "251" + clean.slice(1);
+    }
+    return clean;
   };
 
-  const handleCopySMS = () => {
-    const text = generateReceiptText();
-    navigator.clipboard.writeText(text);
-    setCopiedSMS(true);
-    setTimeout(() => setCopiedSMS(false), 2500);
+  const handleSendWhatsApp = (customData = null) => {
+    const data = customData || receiptData;
+    if (!data) return;
+    const text = generateReceiptText(data);
+    const phone = formatPhoneForWhatsApp(data.customerPhone);
+    const waUrl = phone 
+      ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(text)}`
+      : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(waUrl, "_blank");
+  };
+
+  const handleSendTelegram = (customData = null) => {
+    const data = customData || receiptData;
+    if (!data) return;
+    const text = generateReceiptText(data);
+    const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(text)}`;
+    window.open(tgUrl, "_blank");
   };
 
   // Highlighting matching search characters
@@ -484,9 +506,9 @@ function SellDrug() {
             </div>
           </div>
 
-          {/* Customer Phone Number for SMS */}
+          {/* Customer Phone Number */}
           <div className="pos-customer-input-box" style={{ marginTop: "10px" }}>
-            <label>Customer Phone Number (for SMS Receipt)</label>
+            <label>Customer Phone Number (for WhatsApp / Telegram Receipt)</label>
             <div className="pos-customer-input-wrapper">
               <Phone size={16} className="input-user-icon" />
               <input
@@ -496,6 +518,55 @@ function SellDrug() {
                 onChange={(e) => setCustomerPhone(e.target.value)}
               />
             </div>
+          </div>
+
+          {/* Section: Digital Receipt */}
+          <div className="pos-digital-receipt-box">
+            <label className="pos-field-heading">Digital Receipt</label>
+            <div className="pos-digital-options-list">
+              <button
+                type="button"
+                className={`pos-digital-opt-pill ${digitalReceiptOption === "skip" ? "active-skip" : ""}`}
+                onClick={() => setDigitalReceiptOption("skip")}
+              >
+                <span className="pill-dot">⚪</span>
+                <span className="pill-label">Skip Digital Receipt</span>
+              </button>
+
+              <button
+                type="button"
+                className={`pos-digital-opt-pill ${digitalReceiptOption === "whatsapp" ? "active-whatsapp" : ""}`}
+                onClick={() => setDigitalReceiptOption("whatsapp")}
+              >
+                <span className="pill-dot">🟢</span>
+                <span className="pill-label">Send via WhatsApp</span>
+              </button>
+
+              <button
+                type="button"
+                className={`pos-digital-opt-pill ${digitalReceiptOption === "telegram" ? "active-telegram" : ""}`}
+                onClick={() => setDigitalReceiptOption("telegram")}
+              >
+                <span className="pill-dot">🔵</span>
+                <span className="pill-label">Send via Telegram</span>
+              </button>
+            </div>
+
+            {digitalReceiptOption === "whatsapp" && (
+              <p className="pos-digital-hint hint-wa">
+                🟢 Will automatically open WhatsApp with receipt ready to send.
+              </p>
+            )}
+            {digitalReceiptOption === "telegram" && (
+              <p className="pos-digital-hint hint-tg">
+                🔵 Will automatically open Telegram with receipt ready to send.
+              </p>
+            )}
+            {digitalReceiptOption === "skip" && (
+              <p className="pos-digital-hint hint-skip">
+                ⚪ Records sale and inventory only — no message sent.
+              </p>
+            )}
           </div>
 
           {/* Totals & Calculations */}
@@ -516,15 +587,27 @@ function SellDrug() {
             </div>
           </div>
 
-          {/* Checkout & Generate Receipt Button */}
+          {/* Checkout & Sale Button */}
           <button
-            className="btn-checkout-print"
+            className={`btn-checkout-print ${
+              digitalReceiptOption === "whatsapp"
+                ? "btn-checkout-whatsapp"
+                : digitalReceiptOption === "telegram"
+                ? "btn-checkout-telegram"
+                : "btn-checkout-skip"
+            }`}
             disabled={cart.length === 0 || isProcessing}
             onClick={handleCheckoutAndPrint}
           >
             <ShoppingCart size={18} />
             <span>
-              {isProcessing ? "Processing Sale..." : "Checkout & Generate Receipt"}
+              {isProcessing
+                ? "Processing Sale..."
+                : digitalReceiptOption === "whatsapp"
+                ? "Complete Sale & Send WhatsApp"
+                : digitalReceiptOption === "telegram"
+                ? "Complete Sale & Send Telegram"
+                : "Complete Sale (No Message)"}
             </span>
           </button>
         </div>
@@ -647,20 +730,24 @@ function SellDrug() {
 
               <button
                 type="button"
-                className="btn-receipt-action btn-send-sms"
-                onClick={handleSendSMS}
+                className="btn-receipt-action btn-send-whatsapp"
+                onClick={handleSendWhatsApp}
               >
-                <MessageSquare size={18} />
-                <span>Send via SMS Message</span>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.044-1.93-.464-1.428-.587-2.336-2.029-2.408-2.123-.07-.095-.568-.756-.568-1.442 0-.687.359-1.025.487-1.166.128-.142.28-.178.373-.178.094 0 .188.001.27.006.088.004.204-.033.319.245.118.283.403.985.438 1.056.036.071.059.154.012.247-.047.094-.07.153-.141.236-.07.082-.148.183-.211.246-.071.071-.144.148-.063.289.083.141.369.608.791.984.545.485.998.636 1.14.707.142.071.224.06.308-.035.083-.095.355-.413.449-.554.095-.142.189-.118.319-.071.13.047.827.39 97.461.142.071.236.106.271.165.035.059.035.341-.109.746z"/>
+                </svg>
+                <span>Send via WhatsApp</span>
               </button>
 
               <button
                 type="button"
-                className="btn-receipt-action btn-copy-sms"
-                onClick={handleCopySMS}
+                className="btn-receipt-action btn-send-telegram"
+                onClick={() => handleSendTelegram()}
               >
-                {copiedSMS ? <Check size={18} /> : <Copy size={18} />}
-                <span>{copiedSMS ? "Copied SMS Text!" : "Copy Receipt Text"}</span>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                </svg>
+                <span>Send via Telegram</span>
               </button>
 
               <button

@@ -12,11 +12,11 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Insert default owner account (username: admin, password: luna1234)
--- The hash below is generated with bcryptjs for password 'luna1234'
+-- Insert default owner account (username: admin, password: eyerus1234)
+-- The hash below is generated with bcryptjs for password 'eyerus1234'
 INSERT INTO users (username, password_hash, role)
-VALUES ('admin', '$2b$10$AjdqedRwDsdoncMJHmRWmeU93c/d8VcC/UQiViHjp4rBUcmCeYbE6', 'owner')
-ON CONFLICT (username) DO NOTHING;
+VALUES ('admin', '$2b$10$YXv8b7ry1vWzxhA1D2RP0ea0OzqzldnVEESL8ZytW8Pm4bTrPsik.', 'owner')
+ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- 2. Create the drugs table
 CREATE TABLE IF NOT EXISTS drugs (
