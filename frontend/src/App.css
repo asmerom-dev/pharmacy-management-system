@@ -2911,7 +2911,7 @@ body {
   position: relative;
   background-color: #070709;
   background-image: 
-    radial-gradient(circle at 50% 25%, rgba(10, 10, 12, 0.5) 0%, rgba(5, 5, 8, 0.88) 75%),
+    radial-gradient(ellipse 480px 620px at 50% 50%, #070709 0%, #070709 46%, rgba(7, 7, 9, 0.85) 75%, transparent 100%),
     url('/login-bg.jpg');
   background-position: center center;
   background-size: cover;
@@ -3044,19 +3044,20 @@ body {
 
 .eyerus-pills-accent-wrap {
   position: absolute;
-  top: -54px;
+  top: -56px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
   pointer-events: none;
-  width: 160px;
+  width: 168px;
 }
 
 .eyerus-pills-accent-img {
   width: 100%;
   height: auto;
   display: block;
-  filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.6));
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 16px rgba(251, 191, 36, 0.5));
 }
 
 /* 4. Glowing Gold Card Inner */
@@ -3068,6 +3069,7 @@ body {
   border-radius: 32px;
   box-shadow: 
     0 0 35px rgba(251, 191, 36, 0.5), 
+    0 -6px 20px rgba(251, 191, 36, 0.3),
     inset 0 0 20px rgba(251, 191, 36, 0.2), 
     0 30px 80px rgba(0, 0, 0, 0.95);
   padding: 56px 30px 30px 30px;
@@ -3103,6 +3105,7 @@ body {
   border-radius: 20px;
   padding: 3px 18px;
   margin-bottom: 16px;
+  overflow: hidden;
   transition: all 0.25s ease;
 }
 
@@ -3120,10 +3123,10 @@ body {
 
 .eyerus-input-wrap input {
   width: 100%;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #ffffff;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: #ffffff !important;
   font-size: 0.96rem;
   font-weight: 500;
   padding: 13px 0;
@@ -3132,6 +3135,18 @@ body {
 .eyerus-input-wrap input::placeholder {
   color: #9ca3af;
   font-weight: 400;
+}
+
+/* Prevent Chrome/Edge light-blue/white autofill background! */
+.eyerus-input-wrap input:-webkit-autofill,
+.eyerus-input-wrap input:-webkit-autofill:hover,
+.eyerus-input-wrap input:-webkit-autofill:focus,
+.eyerus-input-wrap input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #1a1a1e inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
+  border-radius: 0;
 }
 
 .eyerus-eye-toggle {
