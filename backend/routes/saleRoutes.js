@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
+const authMiddleware = require("../middleware/auth");
+router.use(authMiddleware);
 
 // POST - Record a new sale (supports both single drug sale and batch checkout from POS)
 router.post("/", async (req, res) => {
@@ -17,7 +19,7 @@ router.post("/", async (req, res) => {
         const { drug_id: id, quantity: qty } = item;
         if (!id || !qty || qty <= 0) continue;
 
-        const drugRes = await client.query("SELECT * FROM drugs WHERE id = $1 FOR UPDATE", [id]);
+        const drugRes = await client.query("SELECT * FROM drugs WHERE id = $1 AND owner_id = $2 FOR UPDATE", [id, req.user.id]);
         if (drugRes.rows.length === 0) {
           throw new Error(`Drug with ID ${id} not found`);
         }
@@ -31,11 +33,11 @@ router.post("/", async (req, res) => {
         const total_price = unit_price * qty;
 
         const saleRes = await client.query(
-          "INSERT INTO sales (drug_id, quantity, unit_price, total_price) VALUES ($1, $2, $3, $4) RETURNING *",
-          [id, qty, unit_price, total_price]
+          "INSERT INTO sales (drug_id, quantity, unit_price, total_price, owner_id) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+          [id, qty, unit_price, total_price, req.user.id]
         );
 
-        await client.query("UPDATE drugs SET stock = stock - $1 WHERE id = $2", [qty, id]);
+        await client.query("UPDATE drugs SET stock = stock - $1 WHERE id = $2 AND owner_id = $3", [qty, id, req.user.id]);
         salesRecorded.push({
           ...saleRes.rows[0],
           drug_name: drug.name
@@ -55,7 +57,7 @@ router.post("/", async (req, res) => {
     }
 
     await client.query("BEGIN");
-    const drugResult = await client.query("SELECT * FROM drugs WHERE id = $1 FOR UPDATE", [drug_id]);
+    const drugResult = await client.query("SELECT * FROM drugs WHERE id = $1 AND owner_id = $2 FOR UPDATE", [drug_id, req.user.id]);
 
     if (drugResult.rows.length === 0) {
       await client.query("ROLLBACK");
@@ -75,11 +77,11 @@ router.post("/", async (req, res) => {
     const total_price = unit_price * quantity;
 
     const saleResult = await client.query(
-      "INSERT INTO sales (drug_id, quantity, unit_price, total_price) VALUES ($1, $2, $3, $4) RETURNING *",
-      [drug_id, quantity, unit_price, total_price]
+      "INSERT INTO sales (drug_id, quantity, unit_price, total_price, owner_id) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [drug_id, quantity, unit_price, total_price, req.user.id]
     );
 
-    await client.query("UPDATE drugs SET stock = stock - $1 WHERE id = $2", [quantity, drug_id]);
+    await client.query("UPDATE drugs SET stock = stock - $1 WHERE id = $2 AND owner_id = $3", [quantity, drug_id, req.user.id]);
     await client.query("COMMIT");
 
     res.status(201).json({

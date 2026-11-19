@@ -306,6 +306,11 @@ function Header() {
           )}
         </div>
 
+        {/* Create Account shortcut */}
+        <button className="header-theme-toggle-btn" onClick={() => navigate("/register")} title="Create Account">
+          +
+        </button>
+
         {/* Live Date / Time Badge */}
         <div className="date-time-chip">
           <Calendar size={16} className="chip-icon" />

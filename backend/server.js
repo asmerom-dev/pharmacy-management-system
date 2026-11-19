@@ -4,6 +4,18 @@ const cors = require("cors");
 const drugRoutes = require("./routes/drugRoutes");
 const saleRoutes = require("./routes/saleRoutes");
 const authRoutes = require("./routes/authRoutes");
+const pool = require("./db");
+
+// Auto-migrate multi-tenant columns
+(async () => {
+  try {
+    await pool.query("ALTER TABLE drugs ADD COLUMN IF NOT EXISTS owner_id INTEGER");
+    await pool.query("ALTER TABLE sales ADD COLUMN IF NOT EXISTS owner_id INTEGER");
+    console.log("✅ Multi-tenant columns ensured");
+  } catch (e) {
+    console.error("Migration notice:", e.message);
+  }
+})();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -56,4 +68,6 @@ app.get("/", (req, res) => {
 // Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Luna Pharmacy API is running on port ${PORT}`);
-});
+});       
+
+

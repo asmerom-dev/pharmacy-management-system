@@ -7,6 +7,7 @@ import SellDrug from "./components/SellDrug";
 import DailySales from "./components/DailySales";
 import Settings from "./components/Settings";
 import Login from "./components/Login";
+import Register from "./components/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function MainLayout() {
@@ -38,6 +39,7 @@ function App() {
     <Routes>
       {/* Public Login Route */}
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       {/* Protected Owner Routes */}
       <Route element={<ProtectedRoute />}>

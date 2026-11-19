@@ -14,10 +14,13 @@ async function initializeUsersTable() {
         id SERIAL PRIMARY KEY,
         username VARCHAR(100) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
+        pharmacy_name VARCHAR(200),
         role VARCHAR(50) DEFAULT 'owner',
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
+    // Ensure column exists on older schemas
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS pharmacy_name VARCHAR(200)");
 
     const defaultHash = await bcrypt.hash("eyerus1234", 10);
 
@@ -90,6 +93,35 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("Login error:", err.message);
     res.status(500).json({ error: "Authentication server error" });
+  }
+});
+
+// POST /api/auth/register - create a new pharmacy owner account
+router.post("/register", async (req, res) => {
+  try {
+    const { username, password, pharmacyName } = req.body;
+    if (!username || !password || !pharmacyName) {
+      return res.status(400).json({ error: "Username, password and pharmacy name are required" });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+    const trimmedUser = username.trim().toLowerCase();
+    const existing = await pool.query("SELECT id FROM users WHERE LOWER(username) = $1", [trimmedUser]);
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: "Username already taken" });
+    }
+    const hash = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      "INSERT INTO users (username, password_hash, pharmacy_name, role) VALUES ($1, $2, $3, $4) RETURNING id, username, pharmacy_name, role",
+      [trimmedUser, hash, pharmacyName.trim(), "owner"]
+    );
+    const user = result.rows[0];
+    const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: "30d" });
+    res.status(201).json({ message: "Account created", token, user: { id: user.id, username: user.username, role: user.role, pharmacy_name: user.pharmacy_name } });
+  } catch (err) {
+    console.error("Register error:", err.message);
+    res.status(500).json({ error: "Failed to create account" });
   }
 });
 

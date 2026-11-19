@@ -1,12 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
+const authMiddleware = require("../middleware/auth");
+router.use(authMiddleware);
 
 // GET all drugs
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, name, category, price, stock, TO_CHAR(expiry_date, 'YYYY-MM-DD') as expiry_date, created_at FROM drugs ORDER BY name ASC"
+      "SELECT id, name, category, price, stock, TO_CHAR(expiry_date, 'YYYY-MM-DD') as expiry_date, created_at FROM drugs WHERE owner_id = $1 ORDER BY name ASC",
+      [req.user.id]
     );
     res.json(result.rows);
   } catch (error) {
@@ -28,8 +31,8 @@ router.post("/", async (req, res) => {
     const expDate = expiry_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     const result = await pool.query(
-      "INSERT INTO drugs (name, category, price, stock, expiry_date) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, category, price, stock, TO_CHAR(expiry_date, 'YYYY-MM-DD') as expiry_date, created_at",
-      [name, category, price, stock, expDate]
+      "INSERT INTO drugs (name, category, price, stock, expiry_date, owner_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, category, price, stock, TO_CHAR(expiry_date, 'YYYY-MM-DD') as expiry_date, created_at",
+      [name, category, price, stock, expDate, req.user.id]
     );
 
     res.status(201).json(result.rows[0]);
@@ -46,8 +49,8 @@ router.put("/:id", async (req, res) => {
     const { name, category, price, stock, expiry_date } = req.body;
 
     const result = await pool.query(
-      "UPDATE drugs SET name = $1, category = $2, price = $3, stock = $4, expiry_date = COALESCE($5, expiry_date) WHERE id = $6 RETURNING id, name, category, price, stock, TO_CHAR(expiry_date, 'YYYY-MM-DD') as expiry_date, created_at",
-      [name, category, price, stock, expiry_date, id]
+      "UPDATE drugs SET name = $1, category = $2, price = $3, stock = $4, expiry_date = COALESCE($5, expiry_date) WHERE id = $6 AND owner_id = $7 RETURNING id, name, category, price, stock, TO_CHAR(expiry_date, 'YYYY-MM-DD') as expiry_date, created_at",
+      [name, category, price, stock, expiry_date, id, req.user.id]
     );
 
     if (result.rows.length === 0) {
@@ -66,8 +69,8 @@ router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      "DELETE FROM drugs WHERE id = $1 RETURNING *",
-      [id]
+      "DELETE FROM drugs WHERE id = $1 AND owner_id = $2 RETURNING *",
+      [id, req.user.id]
     );
 
     if (result.rows.length === 0) {
@@ -85,26 +88,25 @@ router.delete("/:id", async (req, res) => {
 router.get("/stats/dashboard", async (req, res) => {
   try {
     // Total number of drugs and total stock units
-    const totalDrugs = await pool.query("SELECT COUNT(*) as count, COALESCE(SUM(stock), 0) as total_units FROM drugs");
+    const totalDrugs = await pool.query("SELECT COUNT(*) as count, COALESCE(SUM(stock), 0) as total_units FROM drugs WHERE owner_id = $1", [req.user.id]);
 
     // Low stock alerts (stock > 0 and stock <= 20)
     const lowStock = await pool.query(
-      "SELECT COUNT(*) FROM drugs WHERE stock > 0 AND stock <= 20"
+      "SELECT COUNT(*) FROM drugs WHERE stock > 0 AND stock <= 20 AND owner_id = $1", [req.user.id]
     );
 
     // Number of out-of-stock drugs
     const outOfStock = await pool.query(
-      "SELECT COUNT(*) FROM drugs WHERE stock = 0"
+      "SELECT COUNT(*) FROM drugs WHERE stock = 0 AND owner_id = $1", [req.user.id]
     );
 
     // Today's total sales count (transactions)
     const todaySalesCount = await pool.query(
-      "SELECT COUNT(*) FROM sales WHERE DATE(sale_date) = CURRENT_DATE"
+      "SELECT COUNT(*) FROM sales WHERE DATE(sale_date) = CURRENT_DATE AND owner_id = $1", [req.user.id]
     );
 
-    // Today's total revenue
     const todayRevenue = await pool.query(
-      "SELECT COALESCE(SUM(total_price), 0) as revenue FROM sales WHERE DATE(sale_date) = CURRENT_DATE"
+      "SELECT COALESCE(SUM(total_price), 0) as revenue FROM sales WHERE DATE(sale_date) = CURRENT_DATE AND owner_id = $1", [req.user.id]
     );
 
     // 7-day sales trend (by day)
@@ -118,20 +120,21 @@ router.get("/stats/dashboard", async (req, res) => {
         COALESCE(SUM(s.total_price), 0)::numeric as revenue,
         COALESCE(COUNT(s.id), 0)::integer as transactions
       FROM days
-      LEFT JOIN sales s ON DATE(s.sale_date) = days.day
+      LEFT JOIN sales s ON DATE(s.sale_date) = days.day AND s.owner_id = $1
       GROUP BY days.day
       ORDER BY days.day ASC
-    `);
+    `, [req.user.id]);
 
     // Top selling drugs
     const topResult = await pool.query(`
       SELECT d.name, COALESCE(SUM(s.quantity), 0)::integer as total_sold
       FROM drugs d
-      LEFT JOIN sales s ON d.id = s.drug_id
+      LEFT JOIN sales s ON d.id = s.drug_id AND s.owner_id = $1
+      WHERE d.owner_id = $1
       GROUP BY d.name
       ORDER BY total_sold DESC
       LIMIT 5
-    `);
+    `, [req.user.id]);
 
     res.json({
       totalDrugs: parseInt(totalDrugs.rows[0].count),

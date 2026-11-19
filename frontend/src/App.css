@@ -3075,7 +3075,7 @@ body {
 .eyerus-card-outer {
   position: relative;
   width: 100%;
-  margin-top: 26px;
+  margin-top: 54px;
 }
 
 .eyerus-pills-accent-wrap {
@@ -3097,7 +3097,7 @@ body {
 
 /* 4. Glowing Gold Card Inner */
 .eyerus-card-inner {
-  background: rgba(14, 14, 17, 0.90);
+  background: rgba(14, 14, 17, 0.96);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1.8px solid #fbbf24;
@@ -3680,3 +3680,6 @@ body {
     display: none !important;
   }
 }
+
+/* Mobile responsiveness */
+@media (max-width: 768px) { .app-layout-container { flex-direction: column; } .app-main-workspace { width: 100%; } .top-search-bar { width: 100%; } }
