@@ -14,8 +14,7 @@ import {
   Eye,
   CheckCheck,
   Menu,
-  X,
-  UserPlus
+  X
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
@@ -318,17 +317,6 @@ function Header({ onToggleMobileMenu, mobileMenuOpen }) {
             </div>
           )}
         </div>
-
-        {/* Create Store / Account button */}
-        <button
-          type="button"
-          className="header-new-store-pill"
-          onClick={() => navigate("/register")}
-          title="Create New Pharmacy Account"
-        >
-          <UserPlus size={15} />
-          <span className="pill-store-text">New Store</span>
-        </button>
 
         {/* Live Date / Time Badge */}
         <div className="date-time-chip">
