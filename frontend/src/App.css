@@ -3683,3 +3683,7 @@ body {
 
 /* Mobile responsiveness */
 @media (max-width: 768px) { .app-layout-container { flex-direction: column; } .app-main-workspace { width: 100%; } .top-search-bar { width: 100%; } }
+
+/* Mobile responsiveness (comprehensive) */
+@media (max-width: 900px) { .app-layout-container { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; } .app-main-workspace { width: 100%; } .top-search-bar { width: 100%; max-width: none; } .top-header-right { flex-wrap: wrap; gap: 8px; } .date-time-chip { display: none; } main, .app-scrollable-content { padding: 12px; } .grid, .stats-grid, .dashboard-grid { grid-template-columns: 1fr !important; } table { display: block; width: 100%; overflow-x: auto; } .modal, .card { width: 95% !important; max-width: 95% !important; } }
+@media (max-width: 600px) { body { font-size: 14px; } h1,h2 { font-size: 1.2rem; } button { min-height: 40px; } }
