@@ -9,7 +9,13 @@ function authMiddleware(req, res, next) {
   try {
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = { id: decoded.id, username: decoded.username, role: decoded.role };
+    req.user = {
+      id: decoded.id,
+      username: decoded.username,
+      role: decoded.role,
+      pharmacy_name: decoded.pharmacy_name,
+      pharmacist_name: decoded.pharmacist_name
+    };
     next();
   } catch (err) {
     return res.status(401).json({ error: "Invalid or expired session" });

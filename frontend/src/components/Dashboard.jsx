@@ -12,7 +12,8 @@ import {
   FileText,
   ShieldCheck,
   CheckCircle2,
-  Package
+  Package,
+  UserPlus
 } from "lucide-react";
 import {
   BarChart,
@@ -27,6 +28,7 @@ import {
   Legend
 } from "recharts";
 import AddDrugModal from "./AddDrugModal";
+import CreateAccountModal from "./CreateAccountModal";
 import { useSettings } from "../context/SettingsContext";
 
 function Dashboard() {
@@ -43,6 +45,7 @@ function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchStats = async () => {
@@ -108,8 +111,24 @@ function Dashboard() {
           </div>
           <div>
             <h2 className="main-page-title">Dashboard</h2>
-            <p className="main-page-subtitle">Welcome back, {settings.pharmacistName || "Eyerus Gebremariam"}!</p>
+            <p className="main-page-subtitle">
+              Welcome back, {settings.pharmacistName || "Eyerus Gebremariam"}! &bull;{" "}
+              <span className="tenant-store-highlight">{settings.pharmacyName || "Eyerus Pharmacy"}</span>
+            </p>
           </div>
+        </div>
+
+        {/* Dashboard Right Up Corner: Create Account Button */}
+        <div className="dashboard-top-right-actions">
+          <button
+            type="button"
+            className="btn-dashboard-create-account"
+            onClick={() => setIsCreateAccountModalOpen(true)}
+            title="Create a new pharmacy account with isolated data"
+          >
+            <UserPlus size={18} />
+            <span>Create Account</span>
+          </button>
         </div>
       </div>
 
@@ -413,6 +432,12 @@ function Dashboard() {
         onDrugAdded={() => {
           fetchStats();
         }}
+      />
+
+      {/* Create Pharmacy Account Modal */}
+      <CreateAccountModal
+        isOpen={isCreateAccountModalOpen}
+        onClose={() => setIsCreateAccountModalOpen(false)}
       />
     </div>
   );

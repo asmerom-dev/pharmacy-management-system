@@ -161,6 +161,18 @@ function Login() {
                 </span>
                 <ArrowRight size={20} className="btn-arrow-icon" />
               </button>
+
+              {/* Create Pharmacy Account Link */}
+              <div className="eyerus-register-prompt-row">
+                <span>New pharmacy store? </span>
+                <button
+                  type="button"
+                  className="eyerus-link-create-store"
+                  onClick={() => navigate("/register")}
+                >
+                  Create Pharmacy Account &rarr;
+                </button>
+              </div>
             </form>
 
             {/* Bottom Secure Access Divider */}

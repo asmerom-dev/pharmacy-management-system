@@ -12,13 +12,16 @@ import {
   Check,
   ChevronRight,
   Eye,
-  CheckCheck
+  CheckCheck,
+  Menu,
+  X,
+  UserPlus
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
 import { apiFetch } from "../api";
 
-function Header() {
+function Header({ onToggleMobileMenu, mobileMenuOpen }) {
   const [currentTime, setCurrentTime] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
@@ -178,6 +181,16 @@ function Header() {
 
   return (
     <header className="app-top-header">
+      {/* Mobile Hamburger Menu Toggle Button */}
+      <button
+        type="button"
+        className="mobile-hamburger-btn"
+        onClick={onToggleMobileMenu}
+        aria-label="Toggle navigation drawer"
+      >
+        {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+      </button>
+
       {/* Search Input Bar */}
       <form className="top-search-bar" onSubmit={handleSearchSubmit}>
         <Search size={18} className="search-icon-input" />
@@ -306,9 +319,15 @@ function Header() {
           )}
         </div>
 
-        {/* Create Account shortcut */}
-        <button className="header-theme-toggle-btn" onClick={() => navigate("/register")} title="Create Account">
-          +
+        {/* Create Store / Account button */}
+        <button
+          type="button"
+          className="header-new-store-pill"
+          onClick={() => navigate("/register")}
+          title="Create New Pharmacy Account"
+        >
+          <UserPlus size={15} />
+          <span className="pill-store-text">New Store</span>
         </button>
 
         {/* Live Date / Time Badge */}

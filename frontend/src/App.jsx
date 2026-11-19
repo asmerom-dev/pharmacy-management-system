@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
@@ -9,16 +10,33 @@ import Settings from "./components/Settings";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MobileBottomNav from "./components/MobileBottomNav";
 
 function MainLayout() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <div className="app-layout-container">
-      {/* Fixed Left Sidebar */}
-      <Sidebar />
+    <div className={`app-layout-container ${mobileMenuOpen ? "drawer-open-active" : ""}`}>
+      {/* Mobile Backdrop Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="mobile-drawer-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Fixed Left Sidebar / Mobile Slide-in Drawer */}
+      <Sidebar
+        mobileOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+      />
 
       {/* Main Workspace (Top Header + Page Content) */}
       <div className="app-main-workspace">
-        <Header />
+        <Header
+          onToggleMobileMenu={() => setMobileMenuOpen((prev) => !prev)}
+          mobileMenuOpen={mobileMenuOpen}
+        />
         <main className="app-scrollable-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
@@ -30,6 +48,9 @@ function MainLayout() {
           </Routes>
         </main>
       </div>
+
+      {/* Mobile Bottom Dock Navigation (visible on smartphones) */}
+      <MobileBottomNav />
     </div>
   );
 }

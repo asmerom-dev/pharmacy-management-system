@@ -111,8 +111,10 @@ router.get("/daily", async (req, res) => {
               s.sale_date
        FROM sales s 
        JOIN drugs d ON s.drug_id = d.id 
+       WHERE s.owner_id = $1
        ORDER BY s.sale_date DESC
-       LIMIT 20`
+       LIMIT 50`,
+      [req.user.id]
     );
 
     // Today summary
@@ -121,7 +123,8 @@ router.get("/daily", async (req, res) => {
               COALESCE(SUM(quantity), 0) as items,
               COALESCE(COUNT(id), 0) as transactions
        FROM sales 
-       WHERE DATE(sale_date) = CURRENT_DATE`
+       WHERE DATE(sale_date) = CURRENT_DATE AND owner_id = $1`,
+      [req.user.id]
     );
 
     // Week summary (last 7 days)
@@ -130,7 +133,8 @@ router.get("/daily", async (req, res) => {
               COALESCE(COUNT(id), 0) as transactions,
               COALESCE(AVG(total_price), 0) as avg_sale
        FROM sales 
-       WHERE sale_date >= CURRENT_DATE - INTERVAL '7 days'`
+       WHERE sale_date >= CURRENT_DATE - INTERVAL '7 days' AND owner_id = $1`,
+      [req.user.id]
     );
 
     // Month summary (last 30 days)
@@ -139,7 +143,8 @@ router.get("/daily", async (req, res) => {
               COALESCE(COUNT(id), 0) as transactions,
               COALESCE(AVG(total_price), 0) as avg_sale
        FROM sales 
-       WHERE sale_date >= CURRENT_DATE - INTERVAL '30 days'`
+       WHERE sale_date >= CURRENT_DATE - INTERVAL '30 days' AND owner_id = $1`,
+      [req.user.id]
     );
 
     // Top selling drug overall
@@ -147,9 +152,11 @@ router.get("/daily", async (req, res) => {
       `SELECT d.name, SUM(s.quantity) as total_sold
        FROM sales s
        JOIN drugs d ON s.drug_id = d.id
+       WHERE s.owner_id = $1
        GROUP BY d.name
        ORDER BY total_sold DESC
-       LIMIT 1`
+       LIMIT 1`,
+      [req.user.id]
     );
 
     // 7-day trend
@@ -163,10 +170,10 @@ router.get("/daily", async (req, res) => {
         COALESCE(SUM(s.total_price), 0)::numeric as revenue,
         COALESCE(COUNT(s.id), 0)::integer as transactions
       FROM days
-      LEFT JOIN sales s ON DATE(s.sale_date) = days.day
+      LEFT JOIN sales s ON DATE(s.sale_date) = days.day AND s.owner_id = $1
       GROUP BY days.day
       ORDER BY days.day ASC
-    `);
+    `, [req.user.id]);
 
     res.json({
       sales: result.rows,
@@ -197,9 +204,11 @@ router.get("/top", async (req, res) => {
       `SELECT d.name, SUM(s.quantity) as total_sold
        FROM sales s
        JOIN drugs d ON s.drug_id = d.id
+       WHERE s.owner_id = $1
        GROUP BY d.name
        ORDER BY total_sold DESC
-       LIMIT 10`
+       LIMIT 10`,
+      [req.user.id]
     );
 
     res.json(result.rows);

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
 const DEFAULT_SETTINGS = {
   pharmacyName: "Eyerus Pharmacy",
@@ -18,24 +19,44 @@ const SettingsContext = createContext({
 });
 
 export function SettingsProvider({ children }) {
+  const { user } = useAuth();
+
+  const getStorageKey = () => {
+    return user?.id ? `luna_pharmacy_settings_user_${user.id}` : "luna_pharmacy_settings";
+  };
+
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem("luna_pharmacy_settings");
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (!parsed.pharmacistName || parsed.pharmacistName === "Asme Teklay") {
-          parsed.pharmacistName = "Eyerus Gebremariam";
-        }
-        if (!parsed.pharmacistRole || parsed.pharmacistRole === "Pharmacist") {
-          parsed.pharmacistRole = "Chief Pharmacist";
-        }
-        return { ...DEFAULT_SETTINGS, ...parsed };
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
       }
     } catch (e) {
-      console.error("Failed to parse settings from localStorage:", e);
+      console.error("Failed to parse settings:", e);
     }
     return DEFAULT_SETTINGS;
   });
+
+  // When logged-in user changes, sync settings to that pharmacy's profile
+  useEffect(() => {
+    if (user) {
+      const key = `luna_pharmacy_settings_user_${user.id}`;
+      let userSettings = {};
+      try {
+        const saved = localStorage.getItem(key);
+        if (saved) {
+          userSettings = JSON.parse(saved);
+        }
+      } catch (e) {}
+
+      setSettings((prev) => ({
+        ...prev,
+        ...userSettings,
+        pharmacyName: userSettings.pharmacyName || user.pharmacy_name || prev.pharmacyName || "Eyerus Pharmacy",
+        pharmacistName: userSettings.pharmacistName || user.pharmacist_name || prev.pharmacistName || "Chief Pharmacist",
+      }));
+    }
+  }, [user]);
 
   // Apply theme to document element
   useEffect(() => {
@@ -51,6 +72,8 @@ export function SettingsProvider({ children }) {
     setSettings((prev) => {
       const updated = { ...prev, ...partial };
       try {
+        const key = getStorageKey();
+        localStorage.setItem(key, JSON.stringify(updated));
         localStorage.setItem("luna_pharmacy_settings", JSON.stringify(updated));
       } catch (e) {
         console.error("Failed to persist settings:", e);

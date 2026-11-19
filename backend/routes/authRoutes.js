@@ -15,12 +15,14 @@ async function initializeUsersTable() {
         username VARCHAR(100) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         pharmacy_name VARCHAR(200),
+        pharmacist_name VARCHAR(200),
         role VARCHAR(50) DEFAULT 'owner',
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
     // Ensure column exists on older schemas
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS pharmacy_name VARCHAR(200)");
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS pharmacist_name VARCHAR(200)");
 
     const defaultHash = await bcrypt.hash("eyerus1234", 10);
 
@@ -28,17 +30,20 @@ async function initializeUsersTable() {
     const res = await pool.query("SELECT * FROM users WHERE username = $1", ["admin"]);
     if (res.rows.length === 0) {
       await pool.query(
-        "INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3)",
-        ["admin", defaultHash, "owner"]
+        "INSERT INTO users (username, password_hash, pharmacy_name, pharmacist_name, role) VALUES ($1, $2, $3, $4, $5)",
+        ["admin", defaultHash, "Eyerus Pharmacy", "Eyerus Gebremariam", "owner"]
       );
       console.log("🔒 Initialized default owner account: username 'admin', password 'eyerus1234'");
     } else {
-      // Ensure the admin account has password eyerus1234
+      // Ensure the admin account has password eyerus1234 and default names
       const adminUser = res.rows[0];
       const testMatch = await bcrypt.compare("eyerus1234", adminUser.password_hash);
       if (!testMatch) {
         await pool.query("UPDATE users SET password_hash = $1 WHERE username = 'admin'", [defaultHash]);
         console.log("🔒 Updated admin account password to 'eyerus1234'");
+      }
+      if (!adminUser.pharmacy_name) {
+        await pool.query("UPDATE users SET pharmacy_name = 'Eyerus Pharmacy', pharmacist_name = 'Eyerus Gebremariam' WHERE username = 'admin'");
       }
     }
   } catch (err) {
@@ -76,7 +81,13 @@ router.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
+      {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        pharmacy_name: user.pharmacy_name || "Eyerus Pharmacy",
+        pharmacist_name: user.pharmacist_name || "Chief Pharmacist"
+      },
       JWT_SECRET,
       { expiresIn: "30d" }
     );
@@ -87,7 +98,9 @@ router.post("/login", async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
-        role: user.role
+        role: user.role,
+        pharmacy_name: user.pharmacy_name || "Eyerus Pharmacy",
+        pharmacist_name: user.pharmacist_name || "Chief Pharmacist"
       }
     });
   } catch (err) {
@@ -99,9 +112,9 @@ router.post("/login", async (req, res) => {
 // POST /api/auth/register - create a new pharmacy owner account
 router.post("/register", async (req, res) => {
   try {
-    const { username, password, pharmacyName } = req.body;
+    const { username, password, pharmacyName, pharmacistName } = req.body;
     if (!username || !password || !pharmacyName) {
-      return res.status(400).json({ error: "Username, password and pharmacy name are required" });
+      return res.status(400).json({ error: "Pharmacy name, username, and password are required" });
     }
     if (password.length < 6) {
       return res.status(400).json({ error: "Password must be at least 6 characters" });
@@ -109,19 +122,39 @@ router.post("/register", async (req, res) => {
     const trimmedUser = username.trim().toLowerCase();
     const existing = await pool.query("SELECT id FROM users WHERE LOWER(username) = $1", [trimmedUser]);
     if (existing.rows.length > 0) {
-      return res.status(409).json({ error: "Username already taken" });
+      return res.status(409).json({ error: "Username already taken. Please choose another username." });
     }
     const hash = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      "INSERT INTO users (username, password_hash, pharmacy_name, role) VALUES ($1, $2, $3, $4) RETURNING id, username, pharmacy_name, role",
-      [trimmedUser, hash, pharmacyName.trim(), "owner"]
+      "INSERT INTO users (username, password_hash, pharmacy_name, pharmacist_name, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, pharmacy_name, pharmacist_name, role",
+      [trimmedUser, hash, pharmacyName.trim(), (pharmacistName || "Chief Pharmacist").trim(), "owner"]
     );
     const user = result.rows[0];
-    const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: "30d" });
-    res.status(201).json({ message: "Account created", token, user: { id: user.id, username: user.username, role: user.role, pharmacy_name: user.pharmacy_name } });
+    const token = jwt.sign(
+      {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        pharmacy_name: user.pharmacy_name,
+        pharmacist_name: user.pharmacist_name
+      },
+      JWT_SECRET,
+      { expiresIn: "30d" }
+    );
+    res.status(201).json({
+      message: "Pharmacy account created successfully!",
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        pharmacy_name: user.pharmacy_name,
+        pharmacist_name: user.pharmacist_name
+      }
+    });
   } catch (err) {
     console.error("Register error:", err.message);
-    res.status(500).json({ error: "Failed to create account" });
+    res.status(500).json({ error: "Failed to create pharmacy account" });
   }
 });
 
@@ -137,7 +170,7 @@ router.get("/verify", async (req, res) => {
     const decoded = jwt.verify(token, JWT_SECRET);
 
     const result = await pool.query(
-      "SELECT id, username, role, created_at FROM users WHERE id = $1",
+      "SELECT id, username, role, pharmacy_name, pharmacist_name, created_at FROM users WHERE id = $1",
       [decoded.id]
     );
 
@@ -145,7 +178,17 @@ router.get("/verify", async (req, res) => {
       return res.status(401).json({ error: "User no longer exists" });
     }
 
-    res.json({ user: result.rows[0] });
+    const dbUser = result.rows[0];
+    res.json({
+      user: {
+        id: dbUser.id,
+        username: dbUser.username,
+        role: dbUser.role,
+        pharmacy_name: dbUser.pharmacy_name || "Eyerus Pharmacy",
+        pharmacist_name: dbUser.pharmacist_name || "Chief Pharmacist",
+        created_at: dbUser.created_at
+      }
+    });
   } catch (err) {
     res.status(401).json({ error: "Invalid or expired session" });
   }

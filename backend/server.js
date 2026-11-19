@@ -9,9 +9,20 @@ const pool = require("./db");
 // Auto-migrate multi-tenant columns
 (async () => {
   try {
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS pharmacy_name VARCHAR(200)");
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS pharmacist_name VARCHAR(200)");
     await pool.query("ALTER TABLE drugs ADD COLUMN IF NOT EXISTS owner_id INTEGER");
     await pool.query("ALTER TABLE sales ADD COLUMN IF NOT EXISTS owner_id INTEGER");
-    console.log("✅ Multi-tenant columns ensured");
+
+    // Assign any legacy unassigned drugs or sales to default admin account
+    const adminUser = await pool.query("SELECT id FROM users WHERE username = 'admin' LIMIT 1");
+    if (adminUser.rows.length > 0) {
+      const adminId = adminUser.rows[0].id;
+      await pool.query("UPDATE drugs SET owner_id = $1 WHERE owner_id IS NULL", [adminId]);
+      await pool.query("UPDATE sales SET owner_id = $1 WHERE owner_id IS NULL", [adminId]);
+      await pool.query("UPDATE users SET pharmacy_name = COALESCE(pharmacy_name, 'Eyerus Pharmacy'), pharmacist_name = COALESCE(pharmacist_name, 'Eyerus Gebremariam') WHERE username = 'admin'");
+    }
+    console.log("✅ Multi-tenant columns and tenant data ensured");
   } catch (e) {
     console.error("Migration notice:", e.message);
   }
